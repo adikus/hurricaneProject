@@ -17,6 +17,7 @@ public class DummyMapReduce {
 
 		SparkConf conf = new SparkConf().setAppName("Dummy Map Reduce");
 		JavaSparkContext sc = new JavaSparkContext(conf);
+		sc.setCheckpointDir("temp");
 
 		JavaRDD<DataSetChunk> chunks = sc.parallelize(ds.getChunkArray());
 		
@@ -32,6 +33,11 @@ public class DummyMapReduce {
 			chunks = reducedChunks.map(new Function<DataSetChunk, DataSetChunk>(){
 				public DataSetChunk call(DataSetChunk chunk)  { return chunk.step(); }
 			});
+			
+			if(i % 100 == 0 && i > 0){
+				chunks.checkpoint();
+				System.out.println(chunks.count());
+			}
 		}
 		
 		DataSetChunk result = chunks.reduce(new Function2<DataSetChunk, DataSetChunk, DataSetChunk>(){
