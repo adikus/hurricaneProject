@@ -1,3 +1,6 @@
 dummy/.settings
 dummy/target
+dummy/temp
+dummy/log.txt
+dummy/data/out*
 **/*~
