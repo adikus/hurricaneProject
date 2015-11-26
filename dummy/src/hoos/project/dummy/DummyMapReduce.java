@@ -6,45 +6,55 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import scala.Tuple2;
-import hoos.project.dummy.gol.GoLDataSet;
+import hoos.project.dummy.datastore.ArrayDataStore;
+import hoos.project.dummy.gol.GameOfLife;
 
 import java.lang.Iterable;
 
 public class DummyMapReduce {
 	public static void main(String[] args) {
-		DataSet ds = new GoLDataSet(args[0]);
-		ds.initialize();
+		DataManipulationAlgorithm algorithm = new GameOfLife(args[0]);
+		Chunk startingChunk = new Chunk(algorithm, new ArrayDataStore());
+		
+		startingChunk.multiply(100);
+		final int width = startingChunk.getWidth();
+		final int height = startingChunk.getHeight();
 
-		SparkConf conf = new SparkConf().setAppName("Dummy Map Reduce");
+		SparkConf conf = new SparkConf().setAppName("Dummy Map Reduce " + args[2]);
 		JavaSparkContext sc = new JavaSparkContext(conf);
 		sc.setCheckpointDir("temp");
 
-		JavaRDD<DataSetChunk> chunks = sc.parallelize(ds.getChunkArray());
+		JavaRDD<Chunk> chunks = sc.parallelize(startingChunk.split(8));
 		
 		for(int i = 0; i < new Integer(args[2]); i++){
-			JavaPairRDD<String, DataSetChunk> mappedChunks = chunks.flatMapToPair(new PairFlatMapFunction<DataSetChunk, String, DataSetChunk>() {
-			 	public Iterable<Tuple2<String, DataSetChunk>> call(DataSetChunk chunk) { return chunk.splitIntoTuples(); }
+			JavaPairRDD<String, Chunk> mappedChunks = chunks.flatMapToPair(new PairFlatMapFunction<Chunk, String, Chunk>() {
+			 	public Iterable<Tuple2<String, Chunk>> call(Chunk chunk) { return chunk.splitIntoTuples(width, height); }
 			});
 			
-			JavaRDD<DataSetChunk> reducedChunks = mappedChunks.reduceByKey(new Function2<DataSetChunk, DataSetChunk, DataSetChunk>(){
-				public DataSetChunk call(DataSetChunk chunk1, DataSetChunk chunk2) { return chunk1.combine(chunk2); }
+			JavaRDD<Chunk> reducedChunks = mappedChunks.reduceByKey(new Function2<Chunk, Chunk, Chunk>(){
+				public Chunk call(Chunk chunk1, Chunk chunk2) { return chunk1.combine(chunk2); }
 			}).values();
 			
-			chunks = reducedChunks.map(new Function<DataSetChunk, DataSetChunk>(){
-				public DataSetChunk call(DataSetChunk chunk)  { return chunk.step(); }
+			chunks = reducedChunks.map(new Function<Chunk, Chunk>(){
+				public Chunk call(Chunk chunk) {
+					DataManipulationAlgorithm algorithm = new GameOfLife("");
+					chunk.setAlgorithm(algorithm);
+					return chunk.step(); 
+				}
 			});
 			
-			if(i % 100 == 0 && i > 0){
+			if(i % 20 == 0 && i > 0){
 				chunks.checkpoint();
 				System.out.println(chunks.count());
 			}
 		}
 		
-		DataSetChunk result = chunks.reduce(new Function2<DataSetChunk, DataSetChunk, DataSetChunk>(){
-			public DataSetChunk call(DataSetChunk chunk1, DataSetChunk chunk2) { return chunk1.combine(chunk2); }
+		Chunk result = chunks.reduce(new Function2<Chunk, Chunk, Chunk>(){
+			public Chunk call(Chunk chunk1, Chunk chunk2) { return chunk1.combine(chunk2); }
 		});
 		
-		result.outputToFile(args[1]);
+		result.setAlgorithm(algorithm);
+		result.saveToFile(args[1]);
 		
 		sc.close();
 	}
