@@ -36,14 +36,26 @@ public class Test {
 		DataManipulationAlgorithm algorithm = new GameOfLife("data/gol.txt");
 		Chunk startingChunk = new Chunk(algorithm, new ArrayDataStore());
 		
-		startingChunk.multiply(50);
+		final int N = 8;
+		
+		startingChunk.multiply(100);
 		
 		int width = startingChunk.getWidth();
 		int height = startingChunk.getHeight();
 		
-		List<Chunk> chunks = startingChunk.split(8);
+		int widthCount = new Double(Math.ceil(Math.sqrt(N))).intValue();
+		while(N % widthCount > 0)widthCount++;
+		int heightCount = N / widthCount;
 		
-		for(int k = 0; k < 1; k++){
+		if(height > width){
+			int tempCount = widthCount;
+			widthCount = heightCount;
+			heightCount = tempCount;
+		}
+		
+		List<Chunk> chunks = startingChunk.split(widthCount, heightCount);
+		
+		for(int k = 0; k < 40; k++){
 			ArrayList<Tuple2<String, Chunk>> chunkTuples = new ArrayList<Tuple2<String, Chunk>>();
 			HashMap<String, ArrayList<Chunk>> groupedChunks = new HashMap<String, ArrayList<Chunk>>();
 			

@@ -11,14 +11,14 @@ import hoos.project.dummy.gol.GameOfLife;
 
 import java.lang.Iterable;
 
-public class DummyMapReduce {
+public class DummyMapGroup {
 	public static void main(String[] args) {
 		DataManipulationAlgorithm algorithm = new GameOfLife(args[0]);
 		Chunk startingChunk = new Chunk(algorithm, new ArrayDataStore());
 		
 		final int N = 8;
 		
-		startingChunk.multiply(100);
+		startingChunk.multiply(220);
 		final int width = startingChunk.getWidth();
 		final int height = startingChunk.getHeight();
 
@@ -43,9 +43,21 @@ public class DummyMapReduce {
 			 	public Iterable<Tuple2<String, Chunk>> call(Chunk chunk) { return chunk.splitIntoTuples(width, height); }
 			});
 			
-			JavaRDD<Chunk> reducedChunks = mappedChunks.reduceByKey(new Function2<Chunk, Chunk, Chunk>(){
+			/*JavaRDD<Chunk> reducedChunks = mappedChunks.reduceByKey(new Function2<Chunk, Chunk, Chunk>(){
 				public Chunk call(Chunk chunk1, Chunk chunk2) { return chunk1.combine(chunk2); }
-			}).values();
+			}).values();*/
+			
+			JavaRDD<Chunk> reducedChunks = mappedChunks.groupByKey().map(new Function<Tuple2<String, Iterable<Chunk>>, Chunk>() {
+				public Chunk call(Tuple2<String, Iterable<Chunk>> pair) {
+					Chunk result = null;
+					for(Chunk chunk : pair._2()){
+						result = result == null ? chunk : chunk.combine(result);
+					}					
+					
+					result.merge();
+					return result;
+				}
+			});
 			
 			chunks = reducedChunks.map(new Function<Chunk, Chunk>(){
 				public Chunk call(Chunk chunk) {
@@ -66,6 +78,7 @@ public class DummyMapReduce {
 		});
 		
 		result.setAlgorithm(algorithm);
+		result.merge();
 		result.saveToFile(args[1]);
 		
 		sc.close();

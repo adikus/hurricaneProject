@@ -158,19 +158,9 @@ public class Chunk implements Serializable, DataStore{
 		return null;
 	}
 
-	public List<Chunk> split(int n) {
+	public List<Chunk> split(int widthCount, int heightCount) {
 		int width = getWidth();
 		int height = getHeight();
-		
-		int widthCount = new Double(Math.ceil(Math.sqrt(n))).intValue();
-		while(n % widthCount > 0)widthCount++;
-		int heightCount = n / widthCount;
-		
-		if(height > width){
-			int tempCount = widthCount;
-			widthCount = heightCount;
-			heightCount = tempCount;
-		}
 		
 		double widthPart = new Double(width) / widthCount;
 		double heightPart = new Double(height) / heightCount;
@@ -199,6 +189,26 @@ public class Chunk implements Serializable, DataStore{
 	public Iterable<Tuple2<String, Chunk>> splitIntoTuples(int width, int height) {
 		ArrayList<Tuple2<String, Chunk>> chunkTuples = new ArrayList<Tuple2<String, Chunk>>();
 		chunkTuples.add(tuple(key(ix, iy), this));
+		
+		// Add borders
+		if(y - 1     > 0     )chunkTuples.add(createBorderChunk( 0, -1)); // Top 
+		if(y + h + 1 < height)chunkTuples.add(createBorderChunk( 0,  1)); // Bottom
+		if(x - 1     > 0     )chunkTuples.add(createBorderChunk(-1,  0)); // Left
+		if(x + w + 1 < width )chunkTuples.add(createBorderChunk( 1,  0)); // Right
+		
+		// Add Corners
+		if(x - 1     > 0     && y - 1     > 0     )chunkTuples.add(createBorderChunk(-1, -1)); // TopLeft
+		if(x + w + 1 < width && y - 1     > 0     )chunkTuples.add(createBorderChunk( 1, -1)); // TopRight
+		if(x - 1     > 0     && y + h + 1 < height)chunkTuples.add(createBorderChunk(-1,  1)); // BottomLeft
+		if(x + w + 1 < width && y + h + 1 < height)chunkTuples.add(createBorderChunk( 1,  1)); // BottomRight
+		
+		System.out.println("Split " + key(ix, iy));
+		
+		return chunkTuples;
+	}
+	
+	public Iterable<Tuple2<String, Chunk>> getNeighbourPairs(int width, int height) {
+		ArrayList<Tuple2<String, Chunk>> chunkTuples = new ArrayList<Tuple2<String, Chunk>>();
 		
 		// Add borders
 		if(y - 1     > 0     )chunkTuples.add(createBorderChunk( 0, -1)); // Top 
