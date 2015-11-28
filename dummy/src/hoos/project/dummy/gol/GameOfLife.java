@@ -40,7 +40,7 @@ public class GameOfLife implements DataManipulationAlgorithm {
 	}
 
 	@Override
-	public void step(DataStore dataStore, DataStore newStore, int x1, int y1, int x2, int y2) {		
+	public void step(DataStore dataStore, DataStore newStore, int x1, int y1, int x2, int y2) {
 		for(int i = x1; i < x2; i++){
 			for(int j = y1; j < y2; j++) {
 				int cellsAlive = 0;
@@ -75,7 +75,8 @@ public class GameOfLife implements DataManipulationAlgorithm {
 				String line = "";
 				
 				for(int i = 0; i < dataStore.getWidth(); i ++){
-					line += dataStore.get(i, j) > 0 ? 'X' : '.';
+					Integer val = dataStore.get(i, j);
+					line += val == null ? '-' : (val > 0 ? 'X' : '.');
 				}
 				
 				writer.println(line);

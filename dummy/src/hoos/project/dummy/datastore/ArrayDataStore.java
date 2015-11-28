@@ -8,18 +8,23 @@ public class ArrayDataStore implements DataStore{
 
 	private static final long serialVersionUID = 8557096785566236961L;
 	
+	private int width = 0;
+	private int height = 0;
+	
 	private ArrayList<ArrayList<Integer>> mapData = new ArrayList<ArrayList<Integer>>();
 	
 	public ArrayDataStore() {}
 
 	public void put(int x, int y, int value) {
 		if(mapData.size() <= x){
-			while(mapData.size() <= x) mapData.add(new ArrayList<Integer>(y));
+			this.width = x + 1;
+			while(mapData.size() < width) mapData.add(new ArrayList<Integer>(Math.max(height, y + 1)));
 		}
 		ArrayList<Integer> column = mapData.get(x);
 		
 		if(column.size() <= y){
-			while(column.size() <= y) column.add(null);
+			this.height = y + 1;
+			while(column.size() < height) column.add(null);
 		}
 		column.set(y, value);
 	}
@@ -34,11 +39,10 @@ public class ArrayDataStore implements DataStore{
 	}
 
 	public int getWidth() {
-		return mapData.size();
+		return width;
 	}
 
 	public int getHeight() {
-		if(mapData.size() == 0)return 0;
-		return mapData.get(0).size();
+		return height;
 	}
 }

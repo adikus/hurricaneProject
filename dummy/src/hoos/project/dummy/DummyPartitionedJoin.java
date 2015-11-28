@@ -46,11 +46,13 @@ public class DummyPartitionedJoin {
 		}).partitionBy(new SpatialPartitioner(widthCount, heightCount)).cache();
 		
 		for(int i = 0; i < new Integer(args[2]); i++){
+			System.out.println("Start iteration: " + (i + 1));
+			
 			JavaPairRDD<String, Chunk> neighbourChunks = chunks.flatMapToPair(new PairFlatMapFunction<Tuple2<String, Chunk>, String, Chunk>() {
 			 	public Iterable<Tuple2<String, Chunk>> call(Tuple2<String, Chunk> pair) { return pair._2().getNeighbourPairs(width, height); }
 			});
 			
-			chunks = chunks.cogroup(neighbourChunks).mapValues(new Function<Tuple2<Iterable<Chunk>,Iterable<Chunk>>, Chunk>() {
+			JavaPairRDD<String, Chunk> newChunks = chunks.cogroup(neighbourChunks).mapValues(new Function<Tuple2<Iterable<Chunk>,Iterable<Chunk>>, Chunk>() {
 				public Chunk call(Tuple2<Iterable<Chunk>,Iterable<Chunk>> pair) {
 					Chunk result = null;
 					for(Chunk chunk : pair._1()){
@@ -68,23 +70,22 @@ public class DummyPartitionedJoin {
 				}
 			});
 			
-			/*newChunks = newChunks.persist(StorageLevel.MEMORY_ONLY());
+			newChunks = newChunks.cache();
+			
+			if(i % 100 == 0 && i > 0){
+				newChunks.checkpoint();
+			}
+			
+			newChunks.count();
 			chunks.unpersist();
-			chunks = newChunks;*/
-			
-			//chunks = chunks.persist(StorageLevel.MEMORY_ONLY());
-			chunks = chunks.cache();
-			
-			/*if(i % 10 == 0 && i > 0){
-				chunks.checkpoint();
-				System.out.println(chunks.count());
-			}*/
+			chunks = newChunks;
 		}
 		
 		Chunk result = chunks.values().reduce(new Function2<Chunk, Chunk, Chunk>(){
 			public Chunk call(Chunk chunk1, Chunk chunk2) { return chunk1.combine(chunk2); }
 		});
 		
+		result.merge();		
 		result.setAlgorithm(algorithm);
 		result.saveToFile(args[1]);
 		

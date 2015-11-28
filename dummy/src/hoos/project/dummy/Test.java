@@ -38,7 +38,7 @@ public class Test {
 		
 		final int N = 8;
 		
-		startingChunk.multiply(100);
+		startingChunk.multiply(1);
 		
 		int width = startingChunk.getWidth();
 		int height = startingChunk.getHeight();
@@ -55,15 +55,17 @@ public class Test {
 		
 		List<Chunk> chunks = startingChunk.split(widthCount, heightCount);
 		
-		for(int k = 0; k < 40; k++){
+		for(int k = 0; k < 5; k++){
+			System.out.println("Start iteration: " + (k + 1));
+			
 			ArrayList<Tuple2<String, Chunk>> chunkTuples = new ArrayList<Tuple2<String, Chunk>>();
 			HashMap<String, ArrayList<Chunk>> groupedChunks = new HashMap<String, ArrayList<Chunk>>();
 			
 			for(Chunk chunk : chunks){
-				System.out.println();
-				System.out.println("Size: " + serializedSize(chunk));
+				//System.out.println();
+				//System.out.println("Size: " + serializedSize(chunk));
 				chunkTuples.addAll(Lists.newArrayList(chunk.splitIntoTuples(width, height)));
-				System.out.println();
+				//System.out.println();
 			}
 			
 			for(Tuple2<String, Chunk> tuple : chunkTuples){
@@ -79,7 +81,7 @@ public class Test {
 		    for (ArrayList<Chunk> chunksToCombine : groupedChunks.values()) {
 		        Chunk result = null;
 
-				System.out.println();
+				//System.out.println();
 		    	for(Chunk chunk : chunksToCombine){
 		        	result = result == null ? chunk : chunk.combine(result);
 		        }
@@ -89,7 +91,7 @@ public class Test {
 		    	
 		    	chunks.add(result);
 		    	
-				System.out.println();
+				//System.out.println();
 		    }
 		}		
 	    

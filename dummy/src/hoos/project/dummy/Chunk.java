@@ -13,6 +13,8 @@ public class Chunk implements Serializable, DataStore{
 	
 	transient private DataManipulationAlgorithm algorithm;
 	private HashMap<Tuple2<Integer, Integer>, DataStore> storeMap = new HashMap<Tuple2<Integer, Integer>, DataStore>();
+	private DataStore dataStore;
+	private DataStore originalDataStore;
 	
 	private int x, y, w, h, ix, iy;
 	private int sizeFactor = 1;
@@ -30,6 +32,7 @@ public class Chunk implements Serializable, DataStore{
 		this.w = dataStore.getWidth();
 		this.h = dataStore.getHeight();
 		
+		this.dataStore = dataStore;
 		this.storeMap.put(coordinate(x, y), dataStore);
 		setOriginalValues(0, 0, 0, 0);
 	}
@@ -45,6 +48,7 @@ public class Chunk implements Serializable, DataStore{
 		this.w = dataStore.getWidth();
 		this.h = dataStore.getHeight();
 
+		this.dataStore = dataStore;
 		this.storeMap.put(coordinate(x, y), dataStore);
 		setOriginalValues(x, y, w, h);
 	}
@@ -100,6 +104,10 @@ public class Chunk implements Serializable, DataStore{
 		return this.storeMap;
 	}
 	
+	public DataStore getDataStore() {
+		return this.dataStore;
+	}
+	
 	public void setAlgorithm(DataManipulationAlgorithm algorithm) {
 		this.algorithm = algorithm;
 	}
@@ -109,15 +117,17 @@ public class Chunk implements Serializable, DataStore{
 		int finalY = y % getBaseHeight();
 		
 		// Put into the first one
-		storeMap.values().iterator().next().put(finalX, finalY, value);
+		this.dataStore.put(finalX, finalY, value);
+		//storeMap.values().iterator().next().put(finalX, finalY, value);
 	}
 	
 	public Integer get(int x, int y) {
 		int finalX = x % getBaseWidth();
 		int finalY = y % getBaseHeight();
 		
-		if(storeMap.size() == 1) {
-			storeMap.values().iterator().next().get(finalX, finalY);
+		return this.dataStore.get(finalX, finalY);
+		/*if(storeMap.size() == 1) {
+			return storeMap.values().iterator().next().get(finalX, finalY);
 		}
 		
 		for(Map.Entry<Tuple2<Integer, Integer>, DataStore> entry : storeMap.entrySet()){
@@ -133,7 +143,7 @@ public class Chunk implements Serializable, DataStore{
 				return dataStore.get(finalX - sx, finalY - sy);
 			}
 		}
-		return null;
+		return null;*/
 	}
 
 	public void multiply(int i) {
@@ -143,7 +153,7 @@ public class Chunk implements Serializable, DataStore{
 	public DataStore getSubset(int x1, int y1, int x2, int y2){
 		DataStore subset;
 		try {
-			subset = storeMap.values().iterator().next().getClass().newInstance();
+			subset = dataStore.getClass().newInstance();
 			
 			for(int k = x1; k < x2; k++){
 				for(int l = y1; l < y2; l++){
@@ -202,7 +212,7 @@ public class Chunk implements Serializable, DataStore{
 		if(x - 1     > 0     && y + h + 1 < height)chunkTuples.add(createBorderChunk(-1,  1)); // BottomLeft
 		if(x + w + 1 < width && y + h + 1 < height)chunkTuples.add(createBorderChunk( 1,  1)); // BottomRight
 		
-		System.out.println("Split " + key(ix, iy));
+		//System.out.println("Split " + key(ix, iy));
 		
 		return chunkTuples;
 	}
@@ -222,7 +232,7 @@ public class Chunk implements Serializable, DataStore{
 		if(x - 1     > 0     && y + h + 1 < height)chunkTuples.add(createBorderChunk(-1,  1)); // BottomLeft
 		if(x + w + 1 < width && y + h + 1 < height)chunkTuples.add(createBorderChunk( 1,  1)); // BottomRight
 		
-		System.out.println("Split " + key(ix, iy));
+		//System.out.println("Split " + key(ix, iy));
 		
 		return chunkTuples;
 	}
@@ -246,10 +256,11 @@ public class Chunk implements Serializable, DataStore{
 	
 	public Chunk combine(Chunk chunk) {
 		//String initialSigntatures = "Combined " + this.signature() + " with " + chunk.signature();
-		System.out.println("Combining " + " " + w + "x" + h + " " + x + ", " + y + " + " + chunk.getWidth() + "x" + chunk.getHeight() + " " + chunk.getX() + ", " + chunk.getY());
+		//System.out.println("Combining " + " " + w + "x" + h + " " + x + ", " + y + " + " + chunk.getWidth() + "x" + chunk.getHeight() + " " + chunk.getX() + ", " + chunk.getY());
 		
 		if(chunk.getOriginalWidth() * chunk.getOriginalHeight() > originalW * originalH){
-			setOriginalValues(chunk.getOriginalX(), chunk.getOriginalY(), chunk.getOriginalWidth(), chunk.getOriginalHeight());
+			return chunk.combine(this);
+			//setOriginalValues(chunk.getOriginalX(), chunk.getOriginalY(), chunk.getOriginalWidth(), chunk.getOriginalHeight());
 		}
 		
 		int oldX = x;
@@ -259,13 +270,17 @@ public class Chunk implements Serializable, DataStore{
 		this.w = Math.max(oldX + w, chunk.getX() + chunk.getWidth()) - x;
 		this.h = Math.max(oldY + h, chunk.getY() + chunk.getHeight()) - y;
 	
+		//Tuple2<Integer, Integer> key = entry.getKey();
+		//DataStore dataStore = entry.getValue();
 		for(Map.Entry<Tuple2<Integer, Integer>, DataStore> entry : chunk.getStoreMap().entrySet()){
 			Tuple2<Integer, Integer> key = entry.getKey();
 			DataStore dataStore = entry.getValue();
 			this.storeMap.put(key, dataStore);
 		}
 		
-		System.out.println("Result " + key() + " "+ w + "x" + h + " " + x + ", " + y);
+		//this.storeMap.put(coordinate(chunk.getX(), chunk.getY()), chunk.getDataStore());
+		
+		//System.out.println("Result " + key() + " "+ w + "x" + h + " " + x + ", " + y);
 		
 		//System.out.println(initialSigntatures + " => " + signature() + " ( " + originalSignature() + " )");
 		
@@ -275,8 +290,8 @@ public class Chunk implements Serializable, DataStore{
 	public void merge() {
 		DataStore newStore;
 		try {
-			System.out.println("Merge " + storeMap.size() + " stores");
-			newStore = storeMap.values().iterator().next().getClass().newInstance();
+			//System.out.println("Merge " + (storeMap.size() + 1) + " stores");
+			newStore = dataStore.getClass().newInstance();
 			
 			for(Map.Entry<Tuple2<Integer, Integer>, DataStore> entry : storeMap.entrySet()){
 				Tuple2<Integer, Integer> key = entry.getKey();
@@ -293,29 +308,22 @@ public class Chunk implements Serializable, DataStore{
 				}
 			}
 			
-			storeMap.clear();
-			System.out.println("New store: " + newStore.getWidth() + "x" + newStore.getHeight());
+			storeMap = new HashMap<Tuple2<Integer, Integer>, DataStore>();
+			//System.out.println("New store: " + newStore.getWidth() + "x" + newStore.getHeight());
 			this.storeMap.put(coordinate(x, y), newStore);
+			this.originalDataStore = dataStore;
+			this.dataStore = newStore;
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public Chunk step() {
-		DataStore newStore;
-		try {
-			newStore = storeMap.values().iterator().next().getClass().newInstance();
-			
-			algorithm.step(this, newStore, originalX - x, originalY - y, originalX - x + originalW, originalY - y + originalH);
-			
-			System.out.println("Step " + key());
-			
-			return new Chunk(originalX, originalY, ix, iy, algorithm, newStore);
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
+		algorithm.step(this, originalDataStore, originalX - x, originalY - y, originalX - x + originalW, originalY - y + originalH);
 		
-		return null;
+		//System.out.println("Step " + key());
+		
+		return new Chunk(originalX, originalY, ix, iy, algorithm, originalDataStore);
 	}
 	
 	public void saveToFile(String fileName) {

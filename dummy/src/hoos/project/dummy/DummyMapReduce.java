@@ -65,6 +65,7 @@ public class DummyMapReduce {
 			public Chunk call(Chunk chunk1, Chunk chunk2) { return chunk1.combine(chunk2); }
 		});
 		
+		result.merge();
 		result.setAlgorithm(algorithm);
 		result.saveToFile(args[1]);
 		
