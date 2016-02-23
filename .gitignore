@@ -3,4 +3,17 @@ dummy/target
 dummy/temp
 dummy/log.txt
 dummy/data/out*
+
+LES/hoos.project.LES.Kernels.Halos.cl
+LES/winddata.dat
+LES/hoos.project.LES.Kernels.Halos.profiling/*.apf
+LES/bin/*
+LES/target/*
+
+aparapi-ucores/src/aparapi/com.amd.aparapi/dist/*
+aparapi-ucores/src/aparapi/com.amd.aparapi/classes/*
+aparapi-ucores/src/aparapi/com.amd.aparapi.jni/dist/*
+aparapi-ucores/*.jar
+
 **/*~
+GIS/*

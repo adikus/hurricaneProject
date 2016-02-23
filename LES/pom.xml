@@ -1,0 +1,55 @@
+<project>
+  <groupId>hoos.andrej</groupId>
+  <artifactId>les-map-reduce</artifactId>
+  <modelVersion>4.0.0</modelVersion>
+  <name>LES Map Reduce</name>
+  <packaging>jar</packaging>
+  <version>0.1</version>
+  <dependencies>
+    <dependency> <!-- Spark dependency -->
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-core_2.10</artifactId>
+      <version>1.4.1</version>
+    </dependency>
+	  <dependency>
+       <groupId>aparapi-ucores</groupId>
+       <artifactId>aparapi-ucores</artifactId>
+       <scope>system</scope>
+       <version>1.0</version>
+       <systemPath>${basedir}/../aparapi-ucores/src/aparapi/com.amd.aparapi/dist/aparapi.jar</systemPath>
+    </dependency>
+	  <dependency>
+       <groupId>jna</groupId>
+       <artifactId>jna</artifactId>
+       <scope>system</scope>
+       <version>1.0</version>
+       <systemPath>${basedir}/src/main/resources/jna-4.2.1.jar</systemPath>
+    </dependency>
+  </dependencies>
+  <build>
+	<pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.12.4</version>
+            </plugin>
+        </plugins>
+    </pluginManagement>
+    <plugins>
+        <plugin>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+                <source>1.7</source>
+                <target>1.7</target>
+            </configuration>
+        </plugin>
+    </plugins>
+  </build>
+</project>
+
