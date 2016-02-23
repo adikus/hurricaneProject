@@ -3,7 +3,7 @@ package hoos.project.LES;
 import com.sun.jna.Native;
 
 public interface InitLib extends com.sun.jna.Library {
-    InitLib lib = (InitLib) Native.loadLibrary("/home/andrej/fortran/LES_hoos/RefactoredSources/libles_ocl_gpu.so", InitLib.class);
+    InitLib lib = (InitLib) Native.loadLibrary("src/main/resources/libles_ocl_gpu.so", InitLib.class);
     
     void init_les_params(
     		float[] p2, float[] uvw, float[] uvwsum, float[] fgh, float[] fgh_old,
