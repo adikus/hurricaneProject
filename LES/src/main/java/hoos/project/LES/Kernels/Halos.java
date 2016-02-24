@@ -14,6 +14,70 @@ public class Halos extends Base {
 	private float[] rhs_halo;
 	private float[] sm_halo;
 	
+	public float[] get_p_halo() {
+		return p_halo;
+	}
+
+	public void set_p_halo(float[] p_halo) {
+		this.p_halo = p_halo;
+	}
+
+	public float[] get_uvw_halo() {
+		return uvw_halo;
+	}
+
+	public void set_uvw_halo(float[] uvw_halo) {
+		this.uvw_halo = uvw_halo;
+	}
+
+	public float[] get_uvwsum_halo() {
+		return uvwsum_halo;
+	}
+
+	public void set_uvwsum_halo(float[] uvwsum_halo) {
+		this.uvwsum_halo = uvwsum_halo;
+	}
+
+	public float[] get_fgh_halo() {
+		return fgh_halo;
+	}
+
+	public void set_fgh_halo(float[] fgh_halo) {
+		this.fgh_halo = fgh_halo;
+	}
+
+	public float[] get_fgh_old_halo() {
+		return fgh_old_halo;
+	}
+
+	public void set_fgh_old_halo(float[] fgh_old_halo) {
+		this.fgh_old_halo = fgh_old_halo;
+	}
+
+	public float[] get_diu_halo() {
+		return diu_halo;
+	}
+
+	public void set_diu_halo(float[] diu_halo) {
+		this.diu_halo = diu_halo;
+	}
+
+	public float[] get_rhs_halo() {
+		return rhs_halo;
+	}
+
+	public void set_rhs_halo(float[] rhs_halo) {
+		this.rhs_halo = rhs_halo;
+	}
+
+	public float[] get_sm_halo() {
+		return sm_halo;
+	}
+
+	public void set_sm_halo(float[] sm_halo) {
+		this.sm_halo = sm_halo;
+	}
+	
 	@Override 
 	public void run() {
 		float sum = p2[0] + uvw[0] + uvwsum[0] + fgh[0] + fgh_old[0] + rhs[0] + mask1[0] + diu[0] + sm[0];
@@ -72,6 +136,14 @@ public class Halos extends Base {
 		}
 	}
 	
+	public float getReductionValue() {
+		return val_ptr[0];
+	}
+	
+	public void setReductionValue(float redVal) {
+		val_ptr[0] = redVal;
+	}
+	
 	public void run(int state) {
 		Object [] halos;
 		Range haloRange = Range.create((kp+3) * Math.max(ip+4, jp+3));
@@ -87,13 +159,11 @@ public class Halos extends Base {
 			this.readHalos(States.HALO_READ_VELNW__BONDV1_INIT_UVW, halos, haloRange);
 			break;
 		case States.BONDV1_CALC_UOUT:
-			halos = new Object [] {uvw_halo};
-			this.writeHalos(States.HALO_WRITE_BONDV1_CALC_UOUT, halos , haloRange);
-			this.executeState(States.BONDV1_CALC_UOUT, Range.create(jp, jp));
-			this.readHalos(States.HALO_READ_BONDV1_CALC_UOUT, halos, haloRange);
+			bondv1Reduction();
 			break;
 		case States.BONDV1_CALC_UVW:
 			halos = new Object [] {uvw_halo};
+			this.put(val_ptr);
 			this.writeHalos(States.HALO_WRITE_BONDV1_CALC_UVW, halos , haloRange);
 			this.executeState(States.BONDV1_CALC_UVW, Range.create((kp*jp)+(kp+2)*(ip+2)+(ip+3)*(jp+3)));
 			this.readHalos(States.HALO_READ_BONDV1_CALC_UVW, halos, haloRange);
@@ -121,13 +191,15 @@ public class Halos extends Base {
 			rhsavState();
 			break;
 		case States.PRESS_SOR:
-			sorState();			
+			this.put(val_ptr);
+			// rest needs to be called using pressSORIteration and getPressSORValue		
 			break;
 		case States.PRESS_PAV:
 			pavState();
 			break;
 		case States.PRESS_ADJ:
 			halos = new Object [] {p_halo};
+			this.put(val_ptr);
 			this.writeHalos(States.HALO_WRITE_PRESS_ADJ, halos , haloRange);
 			this.executeState(States.PRESS_ADJ, Range.create(ip*jp*kp));
 			this.readHalos(States.HALO_READ_PRESS_ADJ, halos, haloRange);
@@ -138,14 +210,34 @@ public class Halos extends Base {
 			this.writeHalos(States.HALO_WRITE_PRESS_BOUNDP, halos, haloRange);
 			this.executeState(States.PRESS_BOUNDP, Range.create(max_range*max_range, max_range));
 			this.readHalos(States.HALO_READ_PRESS_BOUNDP, halos, haloRange);
-			
-			System.out.println(Arrays.toString(Arrays.copyOfRange(p_halo, 0, 50)));
+			//System.out.println(Arrays.toString(Arrays.copyOfRange(p_halo, 0, 50)));
 			break;
 		}	
 	}
 	
 	public void dispose() {
 		this.dispose();
+	}
+	
+	private void bondv1Reduction() {
+		Object [] halos = {uvw_halo};
+		Range haloRange = Range.create((kp+3) * Math.max(ip+4, jp+3));
+
+		this.writeHalos(States.HALO_WRITE_BONDV1_CALC_UOUT, halos , haloRange);
+		this.executeState(States.BONDV1_CALC_UOUT, Range.create(jp, jp));
+		this.readHalos(States.HALO_READ_BONDV1_CALC_UOUT, halos, haloRange);
+		
+		this.get(chunks_num);
+		this.get(chunks_denom);
+		
+		float aaa = 0f;
+        float bbb = 0f;
+		for(int i = 0; i < jp; i++){
+			aaa = Math.max(aaa, chunks_num[i]);
+			bbb = Math.max(bbb, chunks_denom[i]);
+		}
+		val_ptr[0] = (aaa + bbb)*0.5f;
+		System.out.println("State 2 value: " + val_ptr[0]);
 	}
 	
 	private void rhsavState() {
@@ -166,57 +258,40 @@ public class Halos extends Base {
             area += chunks_denom[i];
 		}
 		val_ptr[0] = rhsav / area;
-		this.put(val_ptr);
 		System.out.println("State 7 value: " + val_ptr[0]);
 	}
 	
-	private void sorState() {	
-		float pjuge = 0.0001f;
-		int nmaxp = 50;
-		float sor = pjuge * 1.1f;
-		int iter = 0;
-		
+	public void pressSORIteration(int i) {	
 		int oclGlobalRange;
 		int oclLocalRange;
-		int ngroups;
 		
 		Object [] halos = {p_halo};
 		Range haloRange = Range.create((kp+3) * Math.max(ip+4, jp+3));
 		
-		System.out.println("Starting SOR");
-		
-		while (sor > pjuge && iter < nmaxp){
-			iter++;
-			
-			for(int i = 0; i <= 2; i++){
-				if (i < 2){
-					oclGlobalRange = kp*jp;
-			        oclLocalRange = jp;
-			        ngroups = kp;
-				}else{
-					oclGlobalRange = (ip+2)*(jp+2);
-			        oclLocalRange = jp+2;
-			        ngroups = ip+2;
-				}
-				
-				n_ptr[0] = i;
-				this.put(n_ptr);
-				this.writeHalos(States.HALO_WRITE_PRESS_SOR, halos , haloRange);
-				this.executeState(States.PRESS_SOR, Range.create(oclGlobalRange, oclLocalRange));
-				this.readHalos(States.HALO_READ_PRESS_SOR, halos, haloRange);
-				
-				if(i == 1){
-					this.get(chunks_num);
-					sor = 0f;
-					for(int j = 0; j < ngroups; j++){
-						sor = sor + chunks_num[j];
-					}
-					sor = (float) Math.sqrt(sor);
-				}
-			}
-			
-			System.out.println(sor);
+		if (i < 2){
+			oclGlobalRange = kp*jp;
+	        oclLocalRange = jp;
+		}else{
+			oclGlobalRange = (ip+2)*(jp+2);
+	        oclLocalRange = jp+2;
 		}
+		
+		n_ptr[0] = i;
+		this.put(n_ptr);
+		this.writeHalos(States.HALO_WRITE_PRESS_SOR, halos , haloRange);
+		this.executeState(States.PRESS_SOR, Range.create(oclGlobalRange, oclLocalRange));
+		this.readHalos(States.HALO_READ_PRESS_SOR, halos, haloRange);
+	}
+	
+	public float getPressSORValue() {
+		float sor;
+		
+		this.get(chunks_num);
+		sor = 0f;
+		for(int j = 0; j < kp; j++){
+			sor = sor + chunks_num[j];
+		}
+		return (float) Math.sqrt(sor);
 	}
 	
 	private void pavState() {
@@ -234,7 +309,6 @@ public class Halos extends Base {
 			pco += chunks_denom[i];
 		}
 		val_ptr[0] = pav / pco;
-		this.put(val_ptr);
 		System.out.println("State 9 value: " + val_ptr[0]);
 	}
 }
