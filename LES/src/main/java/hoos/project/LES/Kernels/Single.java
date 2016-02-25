@@ -264,7 +264,7 @@ public class Single extends Kernel {
 				}
 			}
 			
-			System.out.println(sor);
+			//System.out.println(sor);
 		}
 	}
 	

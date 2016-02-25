@@ -1,8 +1,12 @@
 package hoos.project.LES.Kernels;
 
+import java.io.Serializable;
+
 import com.amd.aparapi.Range;
 
-public class Halos extends Base {
+public class Halos extends Base implements Serializable {
+	private static final long serialVersionUID = 1L;
+	
 	private float[] p_halo;
 	private float[] uvw_halo;
 	private float[] uvwsum_halo;
@@ -118,6 +122,8 @@ public class Halos extends Base {
 	
 	@Override
 	public void init(int ip, int jp, int kp) {
+		System.out.println("Initialising kernel..");
+		
 		// Outer Halo size: 2 x v_dim x h_w x (ip+jp + 2h_w) x kp
 		// Inner Halo size: 2 x v_dim x h_w x (ip+jp - 2h_w) x kp
 		p_halo = new float[2 * 2 * (ip+jp+6 + 2) * (kp+2)];
@@ -142,6 +148,8 @@ public class Halos extends Base {
 		this.get(diu_halo);
 		this.get(rhs_halo);
 		this.get(sm_halo);
+
+		System.out.println("Finished initialising kernel..");
 	}
 	
 	public float getReductionValue() {

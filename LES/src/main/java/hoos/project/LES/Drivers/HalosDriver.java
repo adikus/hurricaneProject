@@ -8,8 +8,6 @@ public class HalosDriver{
 
 	public static void main(String[] _args) {
 		Halos kernel = new Halos();
-
-		System.out.printf("Initialising kernel..");
 		
 		int ip = 150;
 		int jp = 150;
@@ -177,7 +175,7 @@ public class HalosDriver{
 				}
 			}
 			
-			System.out.println(iter + " " + sor);
+			//System.out.println(iter + " " + sor);
 		}
 	}
 }
