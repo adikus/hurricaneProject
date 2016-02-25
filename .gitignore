@@ -9,6 +9,7 @@ LES/hoos.project.LES.Kernels.Halos.cl
 LES/hoos.project.LES.Kernels.Single.cl
 LES/winddata.dat
 LES/hoos.project.LES.Kernels.Halos.profiling/*.apf
+LES/hoos.project.LES.Kernels.Single.profiling/*.apf
 LES/bin/*
 LES/target/*
 LES/work/*
