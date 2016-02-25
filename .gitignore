@@ -4,6 +4,7 @@ dummy/temp
 dummy/log.txt
 dummy/data/out*
 
+LES/.settings
 LES/hoos.project.LES.Kernels.Halos.cl
 LES/hoos.project.LES.Kernels.Single.cl
 LES/winddata.dat
