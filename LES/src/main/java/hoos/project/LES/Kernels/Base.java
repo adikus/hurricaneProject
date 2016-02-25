@@ -124,45 +124,6 @@ public abstract class Base extends Kernel {
 		this.executeState(States.INIT, Range.create(1, 1));
 	}
 	
-	// A bit cheaty way to deal with any numerical arrays
-	public void put(Object array){
-		switch(array.getClass().getCanonicalName()){
-		case "int[]":
-			this.put((int[])array);
-			break;
-		case "long[]":
-			this.put((long[])array);
-			break;
-		case "float[]":
-			this.put((float[])array);
-			break;
-		case "double[]":
-			this.put((double[])array);
-			break;
-		default:
-			System.err.println("Unable to put " + array.getClass().getCanonicalName() + " into kernel");
-		}
-	}
-	
-	public void get(Object array){
-		switch(array.getClass().getCanonicalName()){
-		case "int[]":
-			this.get((int[])array);
-			break;
-		case "long[]":
-			this.get((long[])array);
-			break;
-		case "float[]":
-			this.get((float[])array);
-			break;
-		case "double[]":
-			this.get((double[])array);
-			break;
-		default:
-			System.err.println("Unable to get " + array.getClass().getCanonicalName() + " from kernel");
-		}
-	}
-	
 	public void executeState(int state, Range range) {
 		state_ptr[0] = state;
 		this.put(state_ptr);

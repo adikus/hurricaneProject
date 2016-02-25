@@ -177,7 +177,7 @@ public class HalosDriver{
 				}
 			}
 			
-			//System.out.println(iter + " " + sor);
+			System.out.println(iter + " " + sor);
 		}
 	}
 }

@@ -1,7 +1,5 @@
 package hoos.project.LES.Kernels;
 
-import java.util.Arrays;
-
 import com.amd.aparapi.Range;
 
 public class Halos extends Base {
@@ -14,7 +12,7 @@ public class Halos extends Base {
 	private float[] rhs_halo;
 	private float[] sm_halo;
 	
-	private Range haloRange = Range.create((kp+3) * Math.max(ip+4, jp+3));
+	private Range haloRange;
 	
 	public float[] get_p_halo() {
 		this.get(p_halo);
@@ -130,6 +128,8 @@ public class Halos extends Base {
 		diu_halo = new float[2 * 16 * (ip+jp+7 + 2) * (kp+3)];
 		rhs_halo = new float[2 * (ip+jp+4 + 2) * (kp+2)];
 		sm_halo = new float[2 * (ip+jp+6 + 2) * (kp+2)];
+		
+		this.haloRange = Range.create((kp+3) * Math.max(ip+4, jp+3));
 		
 		super.init(ip, jp, kp);
 		
