@@ -5,10 +5,12 @@ dummy/log.txt
 dummy/data/out*
 
 LES/hoos.project.LES.Kernels.Halos.cl
+LES/hoos.project.LES.Kernels.Single.cl
 LES/winddata.dat
 LES/hoos.project.LES.Kernels.Halos.profiling/*.apf
 LES/bin/*
 LES/target/*
+LES/work/*
 
 aparapi-ucores/src/aparapi/com.amd.aparapi/dist/*
 aparapi-ucores/src/aparapi/com.amd.aparapi/classes/*
