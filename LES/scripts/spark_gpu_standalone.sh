@@ -9,6 +9,6 @@ export LES_LIB_PATH=$DIR/../src/main/resources/libles_ocl_gpu.so
 export SPARK_JAVA_OPTS="-Djava.library.path=$APARAPI_JNI_PATH -Dcom.amd.aparapi.flowType=binary -Djna.nosys=true -Dcom.amd.aparapi.executionMode=GPU -Dcom.amd.aparapi.enableProfiling=true -Dcom.amd.aparapi.enableProfilingCSV=true -Dcom.amd.aparapi.profilingFileNameFormatStr=profiling/halos" 
 $SPARK_PATH/bin/spark-submit --verbose \
   --class hoos.project.LES.spark.SparkHalosDriver \
-  --master local[1] --conf spark.executor.memory=1G \
+  --master local[1] --conf spark.executor.memory=4G --conf spark.driver.memory=4G \
   --jars $APARAPI_JAR_PATH,$DIR/../src/main/resources/jna-4.2.1.jar \
   $DIR/../target/les-map-reduce-0.1.jar
