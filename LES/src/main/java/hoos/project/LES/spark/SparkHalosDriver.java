@@ -57,7 +57,6 @@ public class SparkHalosDriver {
 			// 2
 			kernels = executeKernelStep(kernels, States.BONDV1_CALC_UOUT);
 			kernels = HaloExchanger.exchangeHalos(kernels, "uvw", ip, jp, kp, X, Y);
-			kernels = step2Reduction(kernels);
 
 			// 3
 			kernels = executeKernelStep(kernels, States.BONDV1_CALC_UVW);
@@ -148,29 +147,6 @@ public class SparkHalosDriver {
 		JavaPairRDD<Integer, Halos> newKernels = kernels.mapValues(new Function<Halos, Halos>() {
 			public Halos call(Halos kernel){
 				kernel.run(state);
-				return kernel;
-			}
-		});
-		newKernels.cache();
-		newKernels.count();
-		kernels.unpersist();
-		return newKernels;
-	}
-	
-	private static JavaPairRDD<Integer, Halos> step2Reduction(JavaPairRDD<Integer, Halos> kernels) {
-		Tuple2<Float, Float> reductionPair = kernels.values().map(new Function<Halos, Tuple2<Float, Float>>() {
-			public Tuple2<Float, Float> call(Halos kernel) {
-				return new Tuple2<Float, Float>(kernel.getReductionNominator(), kernel.getReductionDenominator());
-			}			
-		}).reduce(new Function2<Tuple2<Float, Float>, Tuple2<Float, Float>, Tuple2<Float, Float>>() {
-			public Tuple2<Float, Float> call(Tuple2<Float, Float> pair1, Tuple2<Float, Float> pair2) {
-				return new Tuple2<Float, Float>(Math.max(pair1._1(), pair2._1()), Math.max(pair1._2(), pair2._2()));
-			}
-		});
-		final float reductionValue = (reductionPair._1() + reductionPair._2())*0.5f;
-		JavaPairRDD<Integer, Halos> newKernels = kernels.mapValues(new Function<Halos, Halos>(){
-			public Halos call(Halos kernel){
-				kernel.setReductionValue(reductionValue);
 				return kernel;
 			}
 		});

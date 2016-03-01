@@ -184,7 +184,9 @@ public class Halos extends Base implements Serializable {
 			this.executeState(States.HALO_READ_VELNW__BONDV1_INIT_UVW, haloRange);
 			break;
 		case States.BONDV1_CALC_UOUT:
-			bondv1Reduction();
+			this.executeState(States.HALO_WRITE_BONDV1_CALC_UOUT, haloRange);
+			this.executeState(States.BONDV1_CALC_UOUT, Range.create(jp, jp));
+			this.executeState(States.HALO_READ_BONDV1_CALC_UOUT, haloRange);
 			break;
 		case States.BONDV1_CALC_UVW:
 			this.executeState(States.HALO_WRITE_BONDV1_CALC_UVW, haloRange);
@@ -233,24 +235,6 @@ public class Halos extends Base implements Serializable {
 	
 	public void dispose() {
 		this.dispose();
-	}
-	
-	private void bondv1Reduction() {
-		this.executeState(States.HALO_WRITE_BONDV1_CALC_UOUT, haloRange);
-		this.executeState(States.BONDV1_CALC_UOUT, Range.create(jp, jp));
-		this.executeState(States.HALO_READ_BONDV1_CALC_UOUT, haloRange);
-		
-		this.get(chunks_num);
-		this.get(chunks_denom);
-		
-		nominator = 0f;
-        denominator = 0f;
-		for(int i = 0; i < jp; i++){
-			nominator = Math.max(nominator, chunks_num[i]);
-			denominator = Math.max(denominator, chunks_denom[i]);
-		}
-		//val_ptr[0] = (nominator + denominator)*0.5f;
-		//System.out.println("State 2 value: " + val_ptr[0]);
 	}
 	
 	private void rhsavState() {		

@@ -41,13 +41,10 @@ public class HalosDriver{
 			// 2
 			kernel.run(States.BONDV1_CALC_UOUT);
 			uvw_halo = kernel.get_uvw_halo();
-			float redVal = (kernel.getReductionNominator() + kernel.getReductionDenominator())*0.5f;
 			
-			// reduction
 			uvw_halo = exchange(ip+3, jp+3, kp+3, 4, uvw_halo);
 			
 			kernel.set_uvw_halo(uvw_halo);
-			kernel.setReductionValue(redVal);
 			
 			// 3
 			kernel.run(States.BONDV1_CALC_UVW);
@@ -100,7 +97,7 @@ public class HalosDriver{
 			kernel.run(States.PRESS_RHSAV);
 			fgh_halo = kernel.get_fgh_halo();
 			float [] rhs_halo = kernel.get_rhs_halo();
-			redVal = kernel.getReductionNominator() / kernel.getReductionDenominator();
+			float redVal = kernel.getReductionNominator() / kernel.getReductionDenominator();
 			
 			// reduction
 			fgh_halo = exchange(ip+1, jp+1, kp+1, 4, fgh_halo);
