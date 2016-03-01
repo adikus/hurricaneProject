@@ -72,7 +72,7 @@ ArrayBuffer::~ArrayBuffer()
    if(addr!=NULL)
    {
      acl_aligned_free(addr);//aclPtr
- 	 fprintf(stderr, "Deallocated %d bytes at address %x\n",lengthInBytes,(long)addr);
+ 	  //fprintf(stderr, "(~) Deallocated %d bytes at address %x\n",lengthInBytes,(long)addr);
      //addr = NULL;
    }
 }
@@ -87,7 +87,7 @@ void ArrayBuffer::unpinAbort(JNIEnv *jenv){
    if(addr!=NULL)
    {
      acl_aligned_free(addr);//aclPtr
- 	 fprintf(stderr, "Deallocated %d bytes at address %x\n",lengthInBytes,(long)addr);
+ 	 //fprintf(stderr, "(unpinAbort) Deallocated %d bytes at address %x\n",lengthInBytes,(long)addr);
      addr = NULL;
    }
    //jenv->MonitorExit(javaArray);
@@ -125,7 +125,7 @@ void ArrayBuffer::pin(JNIEnv *jenv){
    if(addr==NULL)
    {
      addr = acl_aligned_malloc ((size_t)lengthInBytes);
- 	 fprintf(stderr, "Allocated %d bytes at address %x\n",lengthInBytes,(long)addr);
+ 	 //fprintf(stderr, "Allocated %d bytes at address %x\n",lengthInBytes,(long)addr);
    }
    isMemModifiedFlag = true;
    memcpy(addr,addrJVM,lengthInBytes);

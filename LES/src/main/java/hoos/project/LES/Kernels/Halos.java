@@ -16,7 +16,9 @@ public class Halos extends Base implements Serializable {
 	private float[] rhs_halo;
 	private float[] sm_halo;
 	
-	private Range haloRange;
+	private float nominator, denominator;
+	
+	transient private Range haloRange;
 	
 	public float[] get_p_halo() {
 		this.get(p_halo);
@@ -156,12 +158,22 @@ public class Halos extends Base implements Serializable {
 		return val_ptr[0];
 	}
 	
+	public float getReductionNominator() {
+		return this.nominator;
+	}
+	
+	public float getReductionDenominator() {
+		return this.denominator;
+	}
+	
 	public void setReductionValue(float redVal) {
 		val_ptr[0] = redVal;
+		System.out.println("Reduction value: " + redVal);
 		this.put(val_ptr);
 	}
 	
 	public void run(int state) {		
+		System.out.println("Kernel running state: " + state);
 		switch(state) {
 		case States.VELNW__BONDV1_INIT_UVW:
 			n_ptr[0] = 1;
@@ -231,14 +243,14 @@ public class Halos extends Base implements Serializable {
 		this.get(chunks_num);
 		this.get(chunks_denom);
 		
-		float aaa = 0f;
-        float bbb = 0f;
+		nominator = 0f;
+        denominator = 0f;
 		for(int i = 0; i < jp; i++){
-			aaa = Math.max(aaa, chunks_num[i]);
-			bbb = Math.max(bbb, chunks_denom[i]);
+			nominator = Math.max(nominator, chunks_num[i]);
+			denominator = Math.max(denominator, chunks_denom[i]);
 		}
-		val_ptr[0] = (aaa + bbb)*0.5f;
-		System.out.println("State 2 value: " + val_ptr[0]);
+		//val_ptr[0] = (nominator + denominator)*0.5f;
+		//System.out.println("State 2 value: " + val_ptr[0]);
 	}
 	
 	private void rhsavState() {		
@@ -249,14 +261,14 @@ public class Halos extends Base implements Serializable {
 		this.get(chunks_num);
 		this.get(chunks_denom);
 		
-		float rhsav = 0f;
-        float area = 0f;
+		nominator = 0f;
+		denominator = 0f;
 		for(int i = 0; i < ip; i++){
-			rhsav += chunks_num[i];
-            area += chunks_denom[i];
+			nominator += chunks_num[i];
+			denominator += chunks_denom[i];
 		}
-		val_ptr[0] = rhsav / area;
-		System.out.println("State 7 value: " + val_ptr[0]);
+		//val_ptr[0] = nominator / denominator;
+		//System.out.println("State 7 value: " + val_ptr[0]);
 	}
 	
 	public void pressSORIteration(int i) {	
@@ -278,15 +290,14 @@ public class Halos extends Base implements Serializable {
 		this.executeState(States.HALO_READ_PRESS_SOR, haloRange);
 	}
 	
-	public float getPressSORValue() {
-		float sor;
-		
+	public float getPressSORValue() {		
 		this.get(chunks_num);
-		sor = 0f;
+		float sor = 0f;
 		for(int j = 0; j < kp; j++){
-			sor = sor + chunks_num[j];
+			sor += chunks_num[j];
 		}
-		return (float) Math.sqrt(sor);
+		return sor;
+		//return (float) Math.sqrt(sor);
 	}
 	
 	private void pavState() {		
@@ -294,13 +305,13 @@ public class Halos extends Base implements Serializable {
 		this.executeState(States.PRESS_PAV, Range.create(ip*kp, ip));
 		this.executeState(States.HALO_READ_PRESS_PAV, haloRange);
 		
-		float pav = 0f;
-        float pco = 0f;
+		nominator = 0f;
+		denominator = 0f;
 		for(int i = 0; i < ip; i++){
-			pav += chunks_num[i];
-			pco += chunks_denom[i];
+			nominator += chunks_num[i];
+			denominator += chunks_denom[i];
 		}
-		val_ptr[0] = pav / pco;
-		System.out.println("State 9 value: " + val_ptr[0]);
+		//val_ptr[0] = nominator / denominator;
+		//System.out.println("State 9 value: " + val_ptr[0]);
 	}
 }

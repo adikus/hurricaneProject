@@ -17,7 +17,7 @@ LES/work/*
 aparapi-ucores/src/aparapi/com.amd.aparapi/dist/*
 aparapi-ucores/src/aparapi/com.amd.aparapi/classes/*
 aparapi-ucores/src/aparapi/com.amd.aparapi.jni/dist/*
-aparapi-ucores/*.jar
+aparapi-ucores/src/aparapi/samples/**/*.jar
 
 **/*~
 GIS/*

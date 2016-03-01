@@ -43,7 +43,7 @@
 
 /////////////////////////////////
 // if not in memory alignment test mode
-//#define TEST_ALIGNED_MEM
+#define TEST_ALIGNED_MEM
 #ifndef TEST_ALIGNED_MEM
 /////////////////////////////////
 class ArrayBuffer{

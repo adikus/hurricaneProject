@@ -1,5 +1,6 @@
 package hoos.project.LES.Drivers;
 
+import hoos.project.LES.HaloExchange.HaloConstructor;
 import hoos.project.LES.HaloExchange.HaloExchanger;
 import hoos.project.LES.Kernels.Halos;
 import hoos.project.LES.Kernels.States;
@@ -22,16 +23,16 @@ public class HalosDriver{
 		System.out.println("Running kernel..");
 		
 		int iter = 0;
-		while(iter < 20){			
+		while(iter < 5){			
 			// 1
 			kernel.run(States.VELNW__BONDV1_INIT_UVW);
 			float [] p_halo = kernel.get_p_halo();
 			float [] uvw_halo = kernel.get_uvw_halo();
 			float [] uvwsum_halo = kernel.get_uvwsum_halo();
 			
-			p_halo = new HaloExchanger(ip+3, jp+3, kp+2, 2).exchange(p_halo);
-			uvw_halo = new HaloExchanger(ip+3, jp+3, kp+3, 4).exchange(uvw_halo);
-			uvwsum_halo = new HaloExchanger(ip+1, jp+1, kp+1, 4).exchange(uvwsum_halo);
+			p_halo = exchange(ip+3, jp+3, kp+2, 2, p_halo);
+			uvw_halo = exchange(ip+3, jp+3, kp+3, 4, uvw_halo);
+			uvwsum_halo = exchange(ip+1, jp+1, kp+1, 4, uvwsum_halo);
 			
 			kernel.set_p_halo(p_halo);
 			kernel.set_uvw_halo(uvw_halo);
@@ -40,10 +41,10 @@ public class HalosDriver{
 			// 2
 			kernel.run(States.BONDV1_CALC_UOUT);
 			uvw_halo = kernel.get_uvw_halo();
-			float redVal = kernel.getReductionValue();
+			float redVal = (kernel.getReductionNominator() + kernel.getReductionDenominator())*0.5f;
 			
 			// reduction
-			uvw_halo = new HaloExchanger(ip+3, jp+3, kp+3, 4).exchange(uvw_halo);
+			uvw_halo = exchange(ip+3, jp+3, kp+3, 4, uvw_halo);
 			
 			kernel.set_uvw_halo(uvw_halo);
 			kernel.setReductionValue(redVal);
@@ -52,7 +53,7 @@ public class HalosDriver{
 			kernel.run(States.BONDV1_CALC_UVW);
 			uvw_halo = kernel.get_uvw_halo();
 
-			uvw_halo = new HaloExchanger(ip+3, jp+3, kp+3, 4).exchange(uvw_halo);
+			uvw_halo = exchange(ip+3, jp+3, kp+3, 4, uvw_halo);
 			
 			kernel.set_uvw_halo(uvw_halo);
 			
@@ -64,11 +65,11 @@ public class HalosDriver{
 			float [] diu_halo = kernel.get_diu_halo();
 			float [] sm_halo = kernel.get_sm_halo();
 
-			uvw_halo = new HaloExchanger(ip+3, jp+3, kp+3, 4).exchange(uvw_halo);
-			uvwsum_halo = new HaloExchanger(ip+1, jp+1, kp+1, 4).exchange(uvwsum_halo);
-			fgh_halo = new HaloExchanger(ip+1, jp+1, kp+1, 4).exchange(fgh_halo);
-			diu_halo = new HaloExchanger(ip+4, jp+3, kp+3, 16).exchange(diu_halo);
-			sm_halo = new HaloExchanger(ip+3, jp+3, kp+2, 1).exchange(sm_halo);
+			uvw_halo = exchange(ip+3, jp+3, kp+3, 4, uvw_halo);
+			uvwsum_halo = exchange(ip+1, jp+1, kp+1, 4, uvwsum_halo);
+			fgh_halo = exchange(ip+1, jp+1, kp+1, 4, fgh_halo);
+			diu_halo = exchange(ip+4, jp+3, kp+3, 16, diu_halo);
+			sm_halo = exchange(ip+3, jp+3, kp+2, 1, sm_halo);
 
 			kernel.set_uvw_halo(uvw_halo);
 			kernel.set_uvwsum_halo(uvwsum_halo);
@@ -80,7 +81,7 @@ public class HalosDriver{
 			kernel.run(States.LES_BOUND_SM);
 			sm_halo = kernel.get_sm_halo();
 
-			sm_halo = new HaloExchanger(ip+3, jp+3, kp+2, 1).exchange(sm_halo);
+			sm_halo = exchange(ip+3, jp+3, kp+2, 1, sm_halo);
 			
 			kernel.set_sm_halo(sm_halo);
 			
@@ -89,8 +90,8 @@ public class HalosDriver{
 			fgh_halo = kernel.get_fgh_halo();
 			float [] fgh_old_halo = kernel.get_fgh_old_halo();
 
-			fgh_halo = new HaloExchanger(ip+1, jp+1, kp+1, 4).exchange(fgh_halo);
-			fgh_old_halo = new HaloExchanger(ip, jp, kp, 4).exchange(fgh_old_halo);
+			fgh_halo = exchange(ip+1, jp+1, kp+1, 4, fgh_halo);
+			fgh_old_halo = exchange(ip, jp, kp, 4, fgh_old_halo);
 			
 			kernel.set_fgh_halo(fgh_halo);
 			kernel.set_fgh_old_halo(fgh_old_halo);
@@ -99,11 +100,11 @@ public class HalosDriver{
 			kernel.run(States.PRESS_RHSAV);
 			fgh_halo = kernel.get_fgh_halo();
 			float [] rhs_halo = kernel.get_rhs_halo();
-			redVal = kernel.getReductionValue();
+			redVal = kernel.getReductionNominator() / kernel.getReductionDenominator();
 			
 			// reduction
-			fgh_halo = new HaloExchanger(ip+1, jp+1, kp+1, 4).exchange(fgh_halo);
-			rhs_halo = new HaloExchanger(ip+2, jp+2, kp+2, 1).exchange(rhs_halo);
+			fgh_halo = exchange(ip+1, jp+1, kp+1, 4, fgh_halo);
+			rhs_halo = exchange(ip+2, jp+2, kp+2, 1, rhs_halo);
 			
 			kernel.set_fgh_halo(fgh_halo);
 			kernel.set_rhs_halo(rhs_halo);
@@ -115,10 +116,10 @@ public class HalosDriver{
 			// 9
 			kernel.run(States.PRESS_PAV);
 			p_halo = kernel.get_p_halo();
-			redVal = kernel.getReductionValue();
+			redVal = kernel.getReductionNominator() / kernel.getReductionDenominator();
 			
 			// reduction
-			p_halo = new HaloExchanger(ip+3, jp+3, kp+2, 2).exchange(p_halo);
+			p_halo = exchange(ip+3, jp+3, kp+2, 2, p_halo);
 			
 			kernel.set_p_halo(p_halo);
 			kernel.setReductionValue(redVal);
@@ -127,7 +128,7 @@ public class HalosDriver{
 			kernel.run(States.PRESS_ADJ);
 			p_halo = kernel.get_p_halo();
 			
-			p_halo = new HaloExchanger(ip+3, jp+3, kp+2, 2).exchange(p_halo);
+			p_halo = exchange(ip+3, jp+3, kp+2, 2, p_halo);
 			
 			kernel.set_p_halo(p_halo);
 
@@ -135,14 +136,9 @@ public class HalosDriver{
 			kernel.run(States.PRESS_BOUNDP);
 			p_halo = kernel.get_p_halo();
 			
-			p_halo = new HaloExchanger(ip+3, jp+3, kp+2, 2).exchange(p_halo);
+			p_halo = exchange(ip+3, jp+3, kp+2, 2, p_halo);
 			
 			kernel.set_p_halo(p_halo);
-			
-			/*long time = kernel.getAccumulatedExecutionTime();
-			System.out.println("Current state: " + i + " duration: " + (time - previousTime));
-			System.out.println("Total kernel execution time: " + time);
-			previousTime = time;*/
 			
 			iter++;
 		}
@@ -155,7 +151,6 @@ public class HalosDriver{
 		int iter = 0;
 		
 		System.out.println("Starting SOR");
-		kernel.run(States.PRESS_SOR);
 
 		while (sor > pjuge && iter < nmaxp){
 			iter++;
@@ -164,18 +159,37 @@ public class HalosDriver{
 				kernel.pressSORIteration(i);
 				float [] p_halo = kernel.get_p_halo();
 				
-				p_halo = new HaloExchanger(ip+3, jp+3, kp+2, 2).exchange(p_halo);
+				p_halo = exchange(ip+3, jp+3, kp+2, 2, p_halo);
 				
 				kernel.set_p_halo(p_halo);
 				
 				if(i == 1){
 					float redVal = kernel.getPressSORValue();
 					// Reduction					
-					sor = redVal;
+					sor = (float) Math.sqrt(redVal);
 				}
 			}
 			
-			//System.out.println(iter + " " + sor);
+			System.out.println(iter + " " + sor);
 		}
+	}
+	
+	private static float [] exchange(int im, int jm, int km, int v_dim, float [] innerHalo) {
+		float [] outerHalo = new float[2 * v_dim * (im+jm + 2) * km];
+		float [] northHalo = new float[v_dim * km * im];
+		float [] southHalo = new float[v_dim * km * im];
+		float [] westHalo = new float[v_dim * km * jm];
+		float [] eastHalo = new float[v_dim * km * jm];
+		float [] northWestHalo = new float[v_dim * km];
+		float [] northEastHalo = new float[v_dim * km];
+		float [] southWestHalo = new float[v_dim * km];
+		float [] southEastHalo = new float[v_dim * km];
+		
+		HaloConstructor hc = new HaloConstructor();
+		
+		hc.deconstruct(innerHalo, northHalo, southHalo, westHalo, eastHalo, northWestHalo, northEastHalo, southWestHalo, southEastHalo, v_dim, im, jm, km);
+		hc.construct(outerHalo, southHalo, northHalo, eastHalo, westHalo, southEastHalo, southWestHalo, northEastHalo, northWestHalo, v_dim, im, jm, km);
+		
+		return outerHalo;
 	}
 }

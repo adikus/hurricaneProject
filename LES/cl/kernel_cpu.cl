@@ -274,13 +274,13 @@ __kernel void run (
 const float dt = *pdt;
 const unsigned int im = *pim;
 const unsigned int jm = *pjm;
-const unsigned int km = *pkm;  
-
+const unsigned int km = *pkm;         
+      
  unsigned int gl_id = get_global_id(0);
  unsigned int gr_id = get_group_id(0);
  unsigned int l_id = get_local_id(0);
- __local float loc_th_1[8];
- __local float loc_th_2[8];
+ __local float loc_th_1[512];
+ __local float loc_th_2[512];
     int n = *n_ptr;
     int state = *state_ptr;
     switch (state) {
@@ -452,43 +452,24 @@ const unsigned int km = *pkm;
  const int ip=im;
  const int jp=jm;
  const int kp=km;
- unsigned int l_id = get_local_id(0);
- unsigned int gl_id = get_global_id(0);
- unsigned int gr_id = get_group_id(0);
- unsigned int nunits = get_num_groups(0);
-   unsigned int j_range = jm;
-  unsigned int j_start = (j_range / nunits)*gr_id;
-  unsigned int j_stop = (j_range / nunits)*(gr_id+1);
-  if (gr_id==nunits-1) {
-   j_stop=j_range;
-  }
-  float maxa = 0.0f;
-  float minb = 0.0f;
-   unsigned int kl_bound = (km % 8) == 0 ? km/8 : km/8 +1;
-   for (unsigned int jl=j_start;jl<j_stop;jl++) {
-    unsigned int j = jl+1;
-    for (unsigned int kl=0;kl<kl_bound;kl++) {
-     unsigned int k = 1+kl*8 +l_id;
-     if (k<=km) {
+ if (get_group_id(0)==0) {
+ unsigned int j = get_local_id(0)+1;
+   aaat[j-1]=0.0F;
+   bbbt[j-1]=0.0F;
+  for (unsigned int k=1;k<=km;k++) {
       float u_im_j_k=uvw[FTNREF3D(im,j,k,ip+2,jp+3,0,-1,-1)].s0;
-      maxa = fmax(maxa,u_im_j_k);
-      minb = fmin(minb,u_im_j_k);
-     }
+      aaat[j-1] = fmax(aaat[j-1],u_im_j_k);
+      bbbt[j-1] = fmin(bbbt[j-1],u_im_j_k);
+  }
+   barrier(CLK_LOCAL_MEM_FENCE);
+   float aaa=0.0F;
+   float bbb=0.0F;
+    for (unsigned int jj=0;jj<jm;jj++) {
+        aaa=fmax(aaat[jj],aaa);
+        bbb=fmin(bbbt[jj],bbb);
     }
-   }
-   aaat[l_id] = maxa;
-   bbbt[l_id] = minb;
-    barrier(CLK_LOCAL_MEM_FENCE);
-    if (l_id==0) {
-   float aaa=0.0f;
-     float bbb=0.0f;
-      for (unsigned int jj=0;jj<8;jj++) {
-          aaa=fmax(aaat[jj],aaa);
-          bbb=fmin(bbbt[jj],bbb);
-      }
-      aaa_chunks[gr_id] = aaa ;
-      bbb_chunks[gr_id] = bbb ;
-    }
+    uout_ptr[0] = (aaa + bbb) * 0.5f;
+ }
 }
  void bondv1_calc_uvw_kernel(
         __global float4* uvw,
@@ -854,22 +835,24 @@ void vel2(
  const unsigned int ip = im;
  const unsigned int jp = jm;
  const unsigned int kp = km;
-      unsigned int gl_id = get_global_id(0);
-      if (gl_id < (jm+3)*(km+2) ) {
-       unsigned int k = gl_id / (jm+3) ;
-       unsigned int j = gl_id % (jm+3) - 1;
-       sm[FTNREF3D(0,j,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(1,j,k,ip+3,jp+3,-1,-1,0)];
-       sm[FTNREF3D(im + 1,j,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(im,j,k,ip+3,jp+3,-1,-1,0)];
-      } else if (gl_id <(jm+3)*(km+2) + (km+2)*(im+2)) {
-       unsigned int k = (gl_id -(jm+3)*(km+2)) / (im+2) ;
-       unsigned int i = (gl_id -(jm+3)*(km+2)) % (im+2);
-       sm[FTNREF3D(i,jm + 1,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(i,jm,k,ip+3,jp+3,-1,-1,0)];
-       sm[FTNREF3D(i,0,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(i,1,k,ip+3,jp+3,-1,-1,0)];
-      } else if (gl_id < (jm+3)*(km+2) + (km+2)*(im+2) + (jm+3)*(im+2)) {
-       unsigned int j = (gl_id -(jm+3)*(km+2)-(km+2)*(im+2)) / (im+2) - 1;
-       unsigned int i = (gl_id -(jm+3)*(km+2)-(km+2)*(im+2)) % (im+2) ;
-       sm[FTNREF3D(i,j,0,ip+3,jp+3,-1,-1,0)] = -sm[FTNREF3D(i,j,1,ip+3,jp+3,-1,-1,0)];
-       sm[FTNREF3D(i,j,km + 1,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(i,j,km,ip+3,jp+3,-1,-1,0)];
+ int idx_o = get_group_id(0);
+ int idx_i = get_local_id(0);
+     int k = idx_o-0;
+     int j = idx_i-1;
+     if (k<km+2 && j <jm+2) {
+      sm[FTNREF3D(0,j,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(1,j,k,ip+3,jp+3,-1,-1,0)];
+      sm[FTNREF3D(im + 1,j,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(im,j,k,ip+3,jp+3,-1,-1,0)];
+     }
+      int i = idx_i-0;
+      if (k<km+1 && i<im+2) {
+      sm[FTNREF3D(i,jm + 1,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(i,jm,k,ip+3,jp+3,-1,-1,0)];
+      sm[FTNREF3D(i,0,k,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(i,1,k,ip+3,jp+3,-1,-1,0)];
+      }
+      j = idx_o-1;
+      i = idx_i-0;
+      if(j<jm+2 && i<im+2) {
+      sm[FTNREF3D(i,j,0,ip+3,jp+3,-1,-1,0)] = -sm[FTNREF3D(i,j,1,ip+3,jp+3,-1,-1,0)];
+      sm[FTNREF3D(i,j,km + 1,ip+3,jp+3,-1,-1,0)] = sm[FTNREF3D(i,j,km,ip+3,jp+3,-1,-1,0)];
       }
 }
  void les_calc_visc__adam_kernel (
@@ -962,54 +945,39 @@ void vel2(
     const int kp = km;
  unsigned int gl_id = get_global_id(0);
  unsigned int gr_id = get_group_id(0);
- unsigned int nunits = get_num_groups(0);
  unsigned int l_id = get_local_id(0);
-   unsigned int il_bound = ip % 8 == 0 ? ip/8 : ip/8 +1;
-  float rhsav=0.0F;
-  float area=0.0F;
-  unsigned int k_range = kp;
-  unsigned int chunk_sz = k_range / nunits;
-  unsigned int kl_start= gr_id*chunk_sz;
-  unsigned int kl_stop= (gr_id < nunits-1) ? (gr_id+1)* chunk_sz : k_range;
-  for (unsigned int kl = kl_start; kl<kl_stop; kl++) {
-   unsigned int k = 1+kl;
-   for (unsigned int il=0;il<il_bound;il++) {
-    unsigned int i = il*8 +l_id+1;
-    if (i<ip+1) {
-     for (unsigned int j=1; j<=jm;j++) {
+    unsigned int k = gr_id+1;
+    unsigned int i = l_id+1;
+    float rhsav=0.0F;
+    float area=0.0F;
+    for (unsigned int j=1; j<=jm;j++) {
       float4 fgh_ijk=fgh[FTNREF3D0(i,j,k,ip+1,jp+1)];
-      float4 uvw_ijk=uvw[FTNREF3D(i,j,k,ip+2,jp+3,0,-1,-1)];
-      bondfgc_( fgh,im,jm,km,i,j,k);
-      float rhs_tmp1 =
-        (-uvw[FTNREF3D(i - 1,j,k,ip+2,jp+3,0,-1,-1)].s0 + uvw_ijk.s0) / dx1[FTNREF1D(i,-1)]
-                     + (-uvw[FTNREF3D(i,j - 1,k,ip+2,jp+3,0,-1,-1)].s1 + uvw_ijk.s1) / dy1[FTNREF1D(j,0)]
-                        + (-uvw[FTNREF3D(i,j,k - 1,ip+2,jp+3,0,-1,-1)].s2 + uvw_ijk.s2) / dzn[FTNREF1D(k,-1)];
-      float rhs_tmp2=
-        (fgh_ijk.s0 - fgh[FTNREF3D0(i - 1,j,k,ip+1,jp+1)].s0) / dx1[FTNREF1D(i,-1)]
-                        + (fgh_ijk.s1 - fgh[FTNREF3D0(i,j - 1,k,ip+1,jp+1)].s1) / dy1[FTNREF1D(j,0)]
-                        + (fgh_ijk.s2 - fgh[FTNREF3D0(i,j,k - 1,ip+1,jp+1)].s2) / dzn[FTNREF1D(k,-1)]
-                        + rhs_tmp1 / dt;
-      float weight = dx1[FTNREF1D(i,-1)] * dy1[FTNREF1D(j,0)] * dzn[FTNREF1D(k,-1)];
-      rhsav += rhs_tmp2 * weight;
-      area += weight;
-      rhs[FTNREF3D0(i,j,k,ip+2,jp+2)] = rhs_tmp2;
-     }
+            float4 uvw_ijk=uvw[FTNREF3D(i,j,k,ip+2,jp+3,0,-1,-1)];
+            bondfgc_( fgh,im,jm,km,i,j,k);
+            float rhs_tmp1 =
+               (-uvw[FTNREF3D(i - 1,j,k,ip+2,jp+3,0,-1,-1)].s0 + uvw_ijk.s0) / dx1[FTNREF1D(i,-1)]
+                + (-uvw[FTNREF3D(i,j - 1,k,ip+2,jp+3,0,-1,-1)].s1 + uvw_ijk.s1) / dy1[FTNREF1D(j,0)]
+                + (-uvw[FTNREF3D(i,j,k - 1,ip+2,jp+3,0,-1,-1)].s2 + uvw_ijk.s2) / dzn[FTNREF1D(k,-1)];
+            float rhs_tmp2=
+               (fgh_ijk.s0 - fgh[FTNREF3D0(i - 1,j,k,ip+1,jp+1)].s0) / dx1[FTNREF1D(i,-1)]
+             + (fgh_ijk.s1 - fgh[FTNREF3D0(i,j - 1,k,ip+1,jp+1)].s1) / dy1[FTNREF1D(j,0)]
+                + (fgh_ijk.s2 - fgh[FTNREF3D0(i,j,k - 1,ip+1,jp+1)].s2) / dzn[FTNREF1D(k,-1)]
+             + rhs_tmp1 / dt;
+         rhsav += dx1[FTNREF1D(i,-1)] * dy1[FTNREF1D(j,0)] * dzn[FTNREF1D(k,-1)] * rhs_tmp2;
+               area += dx1[FTNREF1D(i,-1)] * dy1[FTNREF1D(j,0)] * dzn[FTNREF1D(k,-1)];
+               rhs[FTNREF3D0(i,j,k,ip+2,jp+2)] = rhs_tmp2;
     }
-   }
-  }
  rhsavs_th[l_id]=rhsav;
  areas_th[l_id]=area;
-  barrier(CLK_LOCAL_MEM_FENCE );
-if (l_id==0) {
-  float rhsavs_g=0.0F;
-  float areas_g=0.0F;
-  for (unsigned int ii=0;ii<8;ii++) {
-   rhsavs_g+=rhsavs_th[ii];
-   areas_g+=areas_th[ii];
+    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+    float rhsavs_g=0.0F;
+    float areas_g=0.0F;
+    for (unsigned int ii=0;ii<im;ii++) {
+     rhsavs_g+=rhsavs_th[ii];
+     areas_g+=areas_th[ii];
  }
-     chunks_num[gr_id] = rhsavs_g;
-     chunks_denom[gr_id] = areas_g;
-}
+    chunks_num[gr_id] = rhsavs_g;
+ chunks_denom[gr_id] =areas_g;
 }
 void bondfgc_ (__global float4 *fgh,const int im,const int jm,const int km, int i, int j, int k) {
  const int ip = im;
@@ -1173,40 +1141,28 @@ float calc_reltmp_mp_db(
  const int ip = im;
  const int jp = jm;
  const int kp = km;
- unsigned int gl_id = get_global_id(0);
  unsigned int gr_id = get_group_id(0);
- unsigned int nunits = get_num_groups(0);
  unsigned int l_id = get_local_id(0);
-  unsigned int il_bound = ip % 8 == 0 ? ip/8 : ip/8 +1;
-  float pav = 0.0F;
-  float pco = 0.0F;
-  unsigned int chunk_sz = kp / nunits;
-  unsigned int kl_start= gr_id*chunk_sz;
-  unsigned int kl_stop= (gr_id < nunits-1) ? (gr_id+1)* chunk_sz : kp;
-  for (unsigned int kl = kl_start; kl<kl_stop; kl++) {
- unsigned int k = 1+kl;
-  for (unsigned int il=0;il<il_bound;il++) {
-   unsigned int i = il*8 +l_id+1;
-   if (i<= ip) {
-  for (unsigned int j=1; j<=jm;j++) {
-   float dxyz = dx1[FTNREF1D(i,-1)] * dy1[FTNREF1D(j,0)] * dzn[FTNREF1D(k,-1)];
-          pav = pav + p[FTNREF3D0(i,j,k,ip+3,jp+3)].s0 * dxyz;
-          pco = pco + dxyz;
-  }
-   }
-  }
-}
+    unsigned int k = gr_id+1;
+    unsigned int i = l_id+1;
+    float pav=0.0F;
+    float pco=0.0F;
+    for (unsigned int j=1; j<=jm;j++) {
+     float dxyz = dx1[FTNREF1D(i,-1)] * dy1[FTNREF1D(j,0)] * dzn[FTNREF1D(k,-1)];
+     pav = pav + p[FTNREF3D0(i,j,k,ip+3,jp+3)].s0 * dxyz;
+     pco = pco + dxyz;
+    }
  pavs_th[l_id]=pav;
  pcos_th[l_id]=pco;
-  barrier(CLK_LOCAL_MEM_FENCE );
-  float pavs_g=0.0F;
-  float pcos_g=0.0F;
-  for (unsigned int ii=0;ii<8;ii++) {
-   pavs_g+=pavs_th[ii];
-   pcos_g+=pcos_th[ii];
+    barrier(CLK_LOCAL_MEM_FENCE);
+    float pavs_g=0.0F;
+    float pcos_g=0.0F;
+    for (unsigned int ii=0;ii<im;ii++) {
+     pavs_g+=pavs_th[ii];
+     pcos_g+=pcos_th[ii];
  }
-     chunks_num[gr_id] = pavs_g;
-     chunks_denom[gr_id] = pcos_g;
+    chunks_num[gr_id] = pavs_g;
+ chunks_denom[gr_id] = pcos_g;
 }
  void press_adj_kernel (
         __global float2* p,
@@ -1237,23 +1193,9 @@ float calc_reltmp_mp_db(
  const int ip = im;
  const int jp = jm;
  const int kp = km;
-    unsigned int gl_id = get_global_id(0);
-    if (gl_id < (jm+2)*(km+2) ) {
-     unsigned int k = gl_id / (jm+2) ;
-     unsigned int j = gl_id % (jm+2) ;
-      p[FTNREF3D0(0, j, k, ip + 3, jp + 3)] = p[FTNREF3D0(1, j, k, ip + 3, jp + 3)];
-      p[FTNREF3D0(im+1, j, k, ip + 3, jp + 3)] = p[FTNREF3D0(im, j, k, ip + 3, jp + 3)];
-    } else if (gl_id <(jm+2)*(km+2) + (km+2)*(im+2)) {
-     unsigned int k = (gl_id -(jm+2)*(km+2)) / (im+2) ;
-     unsigned int i = (gl_id -(jm+2)*(km+2)) % (im+2);
-      p[FTNREF3D0(i,0, k, ip + 3, jp + 3)] = p[FTNREF3D0(i, jm, k, ip + 3, jp + 3)];
-      p[FTNREF3D0(i,jm+1, k, ip + 3, jp + 3)] = p[FTNREF3D0(i, 1, k, ip + 3, jp + 3)];
-    } else if (gl_id < (jm+2)*(km+2) + (km+2)*(im+2) + (jm+2)*(im+2)) {
-     unsigned int j = (gl_id -(jm+2)*(km+2)-(km+2)*(im+2)) / (im+2) ;
-     unsigned int i = (gl_id -(jm+2)*(km+2)-(km+2)*(im+2)) % (im+2) ;
-      p[FTNREF3D0(i, j, 0, ip + 3, jp + 3)] = p[FTNREF3D0(i, j, 1, ip + 3, jp + 3)];
-      p[FTNREF3D0(i, j, km+1, ip + 3, jp + 3)] = p[FTNREF3D0(i, j, km, ip + 3, jp + 3)];
-    }
+ unsigned int idx_g = get_group_id(0);
+ unsigned int idx_l = get_local_id(0);
+ boundp_new(p, im, jm, km, idx_g, idx_l);
 }
 void boundp12c_ (__global float2 *p,const unsigned int im,const unsigned int jm,const unsigned int km) {
  const unsigned int ip = im;

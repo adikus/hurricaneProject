@@ -139,7 +139,8 @@ public class Single extends Kernel {
 		this.execute(Range.create(1, 1));
 	}
 	
-	public void run(int state) {		
+	public void run(int state) {	
+		System.out.println("Kernel running state: " + state);	
 		switch(state) {
 		case 1:
 			state_ptr[0] = 1;
@@ -264,7 +265,7 @@ public class Single extends Kernel {
 				}
 			}
 			
-			//System.out.println(sor);
+			System.out.println(iter + " - " + sor);
 		}
 	}
 	
