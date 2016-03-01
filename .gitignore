@@ -12,6 +12,7 @@ LES/hoos.project.LES.Kernels.Halos.profiling/*.apf
 LES/hoos.project.LES.Kernels.Single.profiling/*.apf
 LES/bin/*
 LES/target/*
+LES/temp/*
 LES/work/*
 
 aparapi-ucores/src/aparapi/com.amd.aparapi/dist/*
