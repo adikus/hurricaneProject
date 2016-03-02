@@ -3,9 +3,14 @@ package hoos.project.LES.Kernels;
 import java.io.Serializable;
 
 import com.amd.aparapi.Range;
+import com.amd.aparapi.Kernel.EXECUTION_MODE;
+import com.amd.aparapi.device.OpenCLDevice;
 
-public class Halos extends Base implements Serializable {
+public class HalosCPU extends Base implements Serializable {
 	private static final long serialVersionUID = 1L;
+	
+	private static final int NTH = 128;
+	private int computeUnits;
 	
 	private float[] p_halo;
 	private float[] uvw_halo;
@@ -139,6 +144,8 @@ public class Halos extends Base implements Serializable {
 		
 		this.haloRange = Range.create((kp+3) * Math.max(ip+4, jp+3));
 		
+		this.computeUnits = ((OpenCLDevice) (getExecutionMode().equals(EXECUTION_MODE.GPU) ? OpenCLDevice.best() : (OpenCLDevice)OpenCLDevice.firstCPU())).getMaxComputeUnits();
+		
 		super.init(ip, jp, kp);
 		
 		this.executeState(States.HALO_READ_ALL, haloRange);
@@ -184,9 +191,7 @@ public class Halos extends Base implements Serializable {
 			this.executeState(States.HALO_READ_VELNW__BONDV1_INIT_UVW, haloRange);
 			break;
 		case States.BONDV1_CALC_UOUT:
-			this.executeState(States.HALO_WRITE_BONDV1_CALC_UOUT, haloRange);
-			this.executeState(States.BONDV1_CALC_UOUT, Range.create(jp, jp));
-			this.executeState(States.HALO_READ_BONDV1_CALC_UOUT, haloRange);
+			bondv1Reduction();
 			break;
 		case States.BONDV1_CALC_UVW:
 			this.executeState(States.HALO_WRITE_BONDV1_CALC_UVW, haloRange);
@@ -199,9 +204,8 @@ public class Halos extends Base implements Serializable {
 			this.executeState(States.HALO_READ_VELFG__FEEDBF__LES_CALC_SM, haloRange);
 			break;
 		case States.LES_BOUND_SM:
-			int max_range = Math.max(Math.max(ip+3,jp+3),kp+2);
 			this.executeState(States.HALO_WRITE_LES_BOUND_SM, haloRange);
-			this.executeState(States.LES_BOUND_SM, Range.create(max_range*max_range, max_range));
+			this.executeState(States.LES_BOUND_SM, Range.create((jp+3)*(kp+2) + (kp+2)*(ip+2) + (jp+3)*(ip+2)));
 			this.executeState(States.HALO_READ_LES_BOUND_SM, haloRange);
 			break;
 		case States.LES_CALC_VISC__ADAM:
@@ -224,18 +228,35 @@ public class Halos extends Base implements Serializable {
 			this.executeState(States.HALO_READ_PRESS_ADJ, haloRange);
 			break;
 		case States.PRESS_BOUNDP:
-			max_range = Math.max(Math.max(ip+2,jp+2),kp+2);
 			this.executeState(States.HALO_WRITE_PRESS_BOUNDP, haloRange);
-			this.executeState(States.PRESS_BOUNDP, Range.create(max_range*max_range, max_range));
+			this.executeState(States.PRESS_BOUNDP, Range.create((jp+2)*(kp+2) + (kp+2)*(ip+2) + (jp+2)*(ip+2)));
 			this.executeState(States.HALO_READ_PRESS_BOUNDP, haloRange);
 			//System.out.println(Arrays.toString(Arrays.copyOfRange(p_halo, 0, 50)));
 			break;
 		}	
 	}
+
+	private void bondv1Reduction() {
+		this.executeState(States.HALO_WRITE_BONDV1_CALC_UOUT, haloRange);
+		this.executeState(States.BONDV1_CALC_UOUT, Range.create(NTH*computeUnits, NTH));
+		this.executeState(States.HALO_READ_BONDV1_CALC_UOUT, haloRange);
+		
+		this.get(chunks_num);
+		this.get(chunks_denom);
+		
+		nominator = 0f;
+        denominator = 0f;
+		for(int i = 0; i < computeUnits; i++){
+			nominator = Math.max(nominator, chunks_num[i]);
+			denominator = Math.max(denominator, chunks_denom[i]);
+		}
+		//val_ptr[0] = (nominator + denominator)*0.5f;
+		//System.out.println("State 2 value: " + val_ptr[0]);
+	}
 	
 	private void rhsavState() {		
 		this.executeState(States.HALO_WRITE_PRESS_RHSAV, haloRange);
-		this.executeState(States.PRESS_RHSAV, Range.create(ip*kp, ip));
+		this.executeState(States.PRESS_RHSAV, Range.create(NTH*computeUnits, NTH));
 		this.executeState(States.HALO_READ_PRESS_RHSAV, haloRange);
 		
 		this.get(chunks_num);
@@ -243,7 +264,7 @@ public class Halos extends Base implements Serializable {
 		
 		nominator = 0f;
 		denominator = 0f;
-		for(int i = 0; i < ip; i++){
+		for(int i = 0; i < computeUnits; i++){
 			nominator += chunks_num[i];
 			denominator += chunks_denom[i];
 		}
@@ -282,12 +303,12 @@ public class Halos extends Base implements Serializable {
 	
 	private void pavState() {		
 		this.executeState(States.HALO_WRITE_PRESS_PAV, haloRange);
-		this.executeState(States.PRESS_PAV, Range.create(ip*kp, ip));
+		this.executeState(States.PRESS_PAV, Range.create(NTH*computeUnits, NTH));
 		this.executeState(States.HALO_READ_PRESS_PAV, haloRange);
 		
 		nominator = 0f;
 		denominator = 0f;
-		for(int i = 0; i < ip; i++){
+		for(int i = 0; i < computeUnits; i++){
 			nominator += chunks_num[i];
 			denominator += chunks_denom[i];
 		}

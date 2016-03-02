@@ -1,14 +1,13 @@
 package hoos.project.LES.Drivers;
 
 import hoos.project.LES.HaloExchange.HaloConstructor;
-import hoos.project.LES.HaloExchange.HaloExchanger;
-import hoos.project.LES.Kernels.Halos;
+import hoos.project.LES.Kernels.HalosCPU;
 import hoos.project.LES.Kernels.States;
 
 public class HalosDriver{
 
 	public static void main(String[] _args) {
-		Halos kernel = new Halos();
+		HalosCPU kernel = new HalosCPU();
 		
 		int ip = 150;
 		int jp = 150;
@@ -41,10 +40,13 @@ public class HalosDriver{
 			// 2
 			kernel.run(States.BONDV1_CALC_UOUT);
 			uvw_halo = kernel.get_uvw_halo();
+			float redVal = (kernel.getReductionNominator() + kernel.getReductionDenominator())*0.5f;
 			
+			// reduction
 			uvw_halo = exchange(ip+3, jp+3, kp+3, 4, uvw_halo);
 			
 			kernel.set_uvw_halo(uvw_halo);
+			kernel.setReductionValue(redVal);
 			
 			// 3
 			kernel.run(States.BONDV1_CALC_UVW);
@@ -97,7 +99,7 @@ public class HalosDriver{
 			kernel.run(States.PRESS_RHSAV);
 			fgh_halo = kernel.get_fgh_halo();
 			float [] rhs_halo = kernel.get_rhs_halo();
-			float redVal = kernel.getReductionNominator() / kernel.getReductionDenominator();
+			redVal = kernel.getReductionNominator() / kernel.getReductionDenominator();
 			
 			// reduction
 			fgh_halo = exchange(ip+1, jp+1, kp+1, 4, fgh_halo);
@@ -141,7 +143,7 @@ public class HalosDriver{
 		}
 	}
 	
-	private static void pressSORState(Halos kernel, int ip, int jp, int kp) {
+	private static void pressSORState(HalosCPU kernel, int ip, int jp, int kp) {
 		float pjuge = 0.0001f;
 		int nmaxp = 50;
 		float sor = pjuge * 1.1f;
