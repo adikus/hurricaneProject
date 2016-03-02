@@ -5,11 +5,11 @@ dummy/log.txt
 dummy/data/out*
 
 LES/.settings
-LES/hoos.project.LES.Kernels.Halos.cl
-LES/hoos.project.LES.Kernels.Single.cl
+LES/*.cl
+LES/cl/*.abcl
+LES/cl/*.nbcl
 LES/winddata.dat
-LES/hoos.project.LES.Kernels.Halos.profiling/*.apf
-LES/hoos.project.LES.Kernels.Single.profiling/*.apf
+LES/**/*.apf
 LES/bin/*
 LES/target/*
 LES/temp/*

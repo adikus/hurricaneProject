@@ -1,8 +1,12 @@
 package hoos.project.LES.Kernels;
 
 import com.amd.aparapi.Range;
+import com.amd.aparapi.device.OpenCLDevice;
 
 public class SingleCPU extends Base {
+	
+	private static final int NTH = 128;
+	private int computeUnits;
 	
 	@Override 
 	public void run() {
@@ -17,7 +21,17 @@ public class SingleCPU extends Base {
 		p2[0] = sum;
 	}
 	
-	public void run(int state) {	
+	@Override
+	public void init(int ip, int jp, int kp) {
+		computeUnits = ((OpenCLDevice) (getExecutionMode().equals(EXECUTION_MODE.GPU) ? OpenCLDevice.best() : (OpenCLDevice)OpenCLDevice.firstCPU())).getMaxComputeUnits();
+		
+		super.init(ip, jp, kp);
+		
+		System.out.println("Device has " + computeUnits + " compute units.");
+		System.out.println("Finished initialising kernel..");
+	}
+	
+	public void run(int state) {		
 		System.out.println("Kernel running state: " + state);	
 		switch(state) {
 		case 1:
@@ -28,9 +42,7 @@ public class SingleCPU extends Base {
 			this.execute(Range.create((ip+1)*jp*kp));
 			break;
 		case 2:
-			state_ptr[0] = 2;
-			this.put(state_ptr);
-			this.execute(Range.create(jp, jp));
+			bondv1Reduction();
 			break;
 		case 3:
 			state_ptr[0] = 3;
@@ -45,8 +57,7 @@ public class SingleCPU extends Base {
 		case 5:	
 			state_ptr[0] = 5;
 			this.put(state_ptr);
-			int max_range = Math.max(Math.max(ip+3,jp+3),kp+2);
-			this.execute(Range.create(max_range*max_range, max_range));
+			this.execute(Range.create((jp+3)*(kp+2) + (kp+2)*(ip+2) + (jp+3)*(ip+2)));
 			break;
 		case 6:
 			state_ptr[0] = 6;
@@ -61,7 +72,7 @@ public class SingleCPU extends Base {
 		case 8:
 			state_ptr[0] = 8;
 			this.put(state_ptr);
-			sorState();			
+			sorState();
 			break;
 		case 9:
 			state_ptr[0] = 9;
@@ -76,21 +87,38 @@ public class SingleCPU extends Base {
 		case 11:
 			state_ptr[0] = 11;
 			this.put(state_ptr);
-			max_range = Math.max(Math.max(ip+2,jp+2),kp+2);
-			this.execute(Range.create(max_range*max_range, max_range));
+			this.execute(Range.create((jp+2)*(kp+2) + (kp+2)*(ip+2) + (jp+2)*(ip+2)));
 			break;
 		}	
 	}
 	
+	private void bondv1Reduction() {
+		state_ptr[0] = 2;
+		this.put(state_ptr);
+		this.execute(Range.create(NTH*computeUnits, NTH));
+		
+		this.get(chunks_num);
+		this.get(chunks_denom);
+		
+		float nominator = 0f;
+		float denominator = 0f;
+		for(int i = 0; i < computeUnits; i++){
+			nominator = Math.max(nominator, chunks_num[i]);
+			denominator = Math.max(denominator, chunks_denom[i]);
+		}
+		val_ptr[0] = (nominator + denominator) * 0.5f;
+		this.put(val_ptr);
+	}
+
 	private void rhsavState() {		
-		this.execute(Range.create(ip*kp, ip));
+		this.execute(Range.create(NTH*computeUnits, NTH));
 		
 		this.get(chunks_num);
 		this.get(chunks_denom);
 		
 		float rhsav = 0f;
         float area = 0f;
-		for(int i = 0; i < ip; i++){
+		for(int i = 0; i < computeUnits; i++){
 			rhsav += chunks_num[i];
             area += chunks_denom[i];
 		}
@@ -144,11 +172,11 @@ public class SingleCPU extends Base {
 	}
 	
 	private void pavState() {		
-		this.execute(Range.create(ip*kp, ip));
+		this.execute(Range.create(NTH*computeUnits, NTH));
 		
 		float pav = 0f;
         float pco = 0f;
-		for(int i = 0; i < ip; i++){
+		for(int i = 0; i < computeUnits; i++){
 			pav += chunks_num[i];
 			pco += chunks_denom[i];
 		}

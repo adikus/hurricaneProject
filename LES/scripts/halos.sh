@@ -11,7 +11,7 @@ java \
 	-Djava.library.path=$APARAPI_JNI_PATH \
 	-Dcom.amd.aparapi.flowType=binary \
 	-Djna.nosys=true \
-	-Dcom.amd.aparapi.executionMode=GPU \
+	-Dcom.amd.aparapi.executionMode=CPU \
 	-Dcom.amd.aparapi.enableProfiling=true \
 	-Dcom.amd.aparapi.enableProfilingCSV=true \
 	-Dcom.amd.aparapi.profilingFileNameFormatStr=profiling/halos \
