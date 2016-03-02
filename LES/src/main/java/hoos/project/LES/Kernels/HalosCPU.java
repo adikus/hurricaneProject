@@ -181,6 +181,7 @@ public class HalosCPU extends Base implements Serializable {
 	
 	public void run(int state) {		
 		System.out.println("Kernel running state: " + state);
+		long time = System.nanoTime();
 		switch(state) {
 		case States.VELNW__BONDV1_INIT_UVW:
 			n_ptr[0] = 1;
@@ -234,6 +235,7 @@ public class HalosCPU extends Base implements Serializable {
 			//System.out.println(Arrays.toString(Arrays.copyOfRange(p_halo, 0, 50)));
 			break;
 		}	
+		System.out.println("Kernel running state: " + state + " took: " + (System.nanoTime() - time)/1000000 + " ms");
 	}
 
 	private void bondv1Reduction() {
