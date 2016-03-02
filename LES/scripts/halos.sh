@@ -15,4 +15,4 @@ java \
 	-Dcom.amd.aparapi.enableProfiling=true \
 	-Dcom.amd.aparapi.enableProfilingCSV=true \
 	-Dcom.amd.aparapi.profilingFileNameFormatStr=profiling/halos \
-	hoos.project.LES.Drivers.HalosDriver
+	hoos.project.LES.Drivers.HalosDriver $@

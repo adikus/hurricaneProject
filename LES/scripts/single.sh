@@ -15,4 +15,4 @@ java \
 	-Dcom.amd.aparapi.enableProfiling=true \
 	-Dcom.amd.aparapi.enableProfilingCSV=true \
 	-Dcom.amd.aparapi.profilingFileNameFormatStr=profiling/single \
-	hoos.project.LES.Drivers.SingleDriver
+	hoos.project.LES.Drivers.SingleDriver $@

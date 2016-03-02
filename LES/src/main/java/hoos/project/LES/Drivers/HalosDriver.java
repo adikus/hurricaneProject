@@ -6,7 +6,13 @@ import hoos.project.LES.Kernels.States;
 
 public class HalosDriver{
 
-	public static void main(String[] _args) {
+	public static void main(String[] args) {
+		if(args.length < 1){
+			System.err.println("Please provide the number of iterations");
+			return;
+		}
+		final int iterationsNum = new Integer(args[0]);
+		
 		HalosCPU kernel = new HalosCPU();
 		
 		int ip = 150;
@@ -22,7 +28,7 @@ public class HalosDriver{
 		System.out.println("Running kernel..");
 		
 		int iter = 0;
-		while(iter < 5){			
+		while(iter < iterationsNum){
 			// 1
 			kernel.run(States.VELNW__BONDV1_INIT_UVW);
 			float [] p_halo = kernel.get_p_halo();

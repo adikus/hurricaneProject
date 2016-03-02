@@ -3,7 +3,13 @@ import hoos.project.LES.Kernels.SingleCPU;
 
 public class SingleDriver{
 
-	public static void main(String[] _args) {
+	public static void main(String[] args) {
+		if(args.length < 1){
+			System.err.println("Please provide the number of iterations");
+			return;
+		}
+		final int iterationsNum = new Integer(args[0]);
+		
 		 SingleCPU kernel = new SingleCPU();
 
 		System.out.printf("Initialising kernel..");
@@ -15,9 +21,14 @@ public class SingleDriver{
 
 		System.out.printf("Running kernel..");
 		
-		for(int i = 1; i <= 11; i++){
-			kernel.run(i);
-			System.out.println("Total kernel execution time: " + kernel.getAccumulatedExecutionTime());
+		int iter = 0;
+		while(iter < iterationsNum){
+			for(int i = 1; i <= 11; i++){
+				kernel.run(i);
+				System.out.println("Total kernel execution time: " + kernel.getAccumulatedExecutionTime());
+			}
+			
+			iter++;
 		}
 		
 	}

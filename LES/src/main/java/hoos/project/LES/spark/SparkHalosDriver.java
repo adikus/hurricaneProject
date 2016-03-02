@@ -17,14 +17,20 @@ import scala.Tuple2;
 
 public class SparkHalosDriver {
 	
-	public static void main(String[] _args) {
-		SparkConf conf = new SparkConf().setAppName("LES Spark Simulation");
+	public static void main(String[] args) {
+		if(args.length < 3){
+			System.err.println("Please provide the number of iterations and the domain size");
+			return;
+		}
+		final int iterationsNum = new Integer(args[0]);
+		
+		SparkConf conf = new SparkConf().setAppName("LES Spark Simulation (" + iterationsNum + ")");
 		JavaSparkContext sc = new JavaSparkContext(conf);
 		sc.setCheckpointDir("temp");
 		
 		// Number of nodes
-		final int X = 2;
-		final int Y = 1;
+		final int X = new Integer(args[1]);
+		final int Y = new Integer(args[2]);
 		Integer[] a = new Integer[X*Y];
 		for(int i = 0; i < X*Y; i++){ a[i]=i; }
 		JavaRDD<Integer> indexes = sc.parallelize(Arrays.asList(a));
@@ -49,7 +55,7 @@ public class SparkHalosDriver {
 			}
 		});
 		
-		for(int i = 1; i <= 5; i++){
+		for(int i = 1; i <= iterationsNum; i++){
 			// 1
 			kernels = executeKernelStep(kernels, States.VELNW__BONDV1_INIT_UVW);
 			kernels = HaloExchanger.exchangeHalos(kernels, "p,uvw,uvwsum", ip, jp, kp, X, Y);
@@ -104,7 +110,7 @@ public class SparkHalosDriver {
 	
 	private static JavaPairRDD<Integer, Halos> pressSORState(JavaPairRDD<Integer, Halos> kernels, int ip, int jp, int kp, int X, int Y) {
 		float pjuge = 0.0001f;
-		int nmaxp = 50;
+		int nmaxp = 5;
 		float sor = pjuge * 1.1f;
 		int iter = 0;
 
