@@ -64,6 +64,8 @@ class ArrayBuffer{
       void unpinAbort(JNIEnv *jenv);
       void unpinCommit(JNIEnv *jenv);
       void pin(JNIEnv *jenv);
+      void pinExplicitRead(JNIEnv *jenv);
+      void pinExplicitWrite(JNIEnv *jenv);
 };
 
 #else // defined TEST_ALIGNED_MEM
@@ -132,6 +134,8 @@ class ArrayBuffer{
       void unpinAbort(JNIEnv *jenv);
       void unpinCommit(JNIEnv *jenv);
       void pin(JNIEnv *jenv);
+      void pinExplicitRead(JNIEnv *jenv);
+      void pinExplicitWrite(JNIEnv *jenv);
 };
 #endif // eof TEST_ALIGNED_MEM
 

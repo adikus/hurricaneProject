@@ -88,7 +88,8 @@ class KernelArg{
          //if  (value.ref.isPinned == JNI_FALSE){		 
          //     fprintf(stdout, "why are we unpinning buffer %s! isPinned = JNI_TRUE\n", name);
          //}
-         if (isMutableByKernel()){
+         unpinCommit(jenv);
+         /*if (isMutableByKernel()){
             // we only need to commit if the buffer has been written to
             // we use mode=0 in that case (rather than JNI_COMMIT) because that frees any copy buffer if it exists
             // in most cases this array will have been pinned so this will not be an issue
@@ -96,10 +97,20 @@ class KernelArg{
          }else {
             // fast path for a read_only buffer
             unpinAbort(jenv);
-         }
+         }*/
+      }
+      void pinExplicit(JNIEnv *jenv){
+         //fprintf(stdout, "Pin explicit read from %s\n", name);
+         arrayBuffer->pinExplicitRead(jenv);
       }
       void pin(JNIEnv *jenv){
-         arrayBuffer->pin(jenv);
+         if (isExplicitWrite()){
+           //fprintf(stdout, "Pin explicit write to %s\n", name);
+           arrayBuffer->pinExplicitWrite(jenv);      
+         }else {
+           //fprintf(stdout, "Pin %s\n", name);
+           arrayBuffer->pin(jenv);            
+         }
       }
 
       int isArray(){

@@ -1512,7 +1512,7 @@ JNI_JAVA(jint, KernelRunnerJNI, getJNI)
                fprintf(stderr, "explicitly reading buffer %s\n", arg->name);
             }
             if(arg->isArray()) {
-               arg->pin(jenv);
+               arg->pinExplicit(jenv);
 
                try {
                   status = clEnqueueReadBuffer(jniContext->commandQueue, arg->arrayBuffer->mem, 

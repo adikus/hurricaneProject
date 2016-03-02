@@ -64,6 +64,21 @@ void ArrayBuffer::pin(JNIEnv *jenv){
    addr = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
    isPinned = JNI_TRUE;
 }
+void ArrayBuffer::pinExplicit(JNIEnv *jenv){
+   void *ptr = addr;
+   addr = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
+   isPinned = JNI_TRUE;
+}
+void ArrayBuffer::pinExplicitRead(JNIEnv *jenv){
+   void *ptr = addr;
+   addr = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
+   isPinned = JNI_TRUE;
+}
+void ArrayBuffer::pinExplicitWrite(JNIEnv *jenv){
+   void *ptr = addr;
+   addr = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
+   isPinned = JNI_TRUE;
+}
 
 #else // defined TEST_ALIGNED_MEM
 ArrayBuffer::~ArrayBuffer()
@@ -102,13 +117,13 @@ void ArrayBuffer::unpinCommit(JNIEnv *jenv){
 	// if it was write or read write we need to update
 	//if (isMutableByKernel())
    //jenv->MonitorEnter(javaArray);
-   if(addr!=NULL)
+   /*if(addr!=NULL)
    {
      memcpy(addrJVM,addr,lengthInBytes);
      ///acl_aligned_free(addr);//aclPtr
      ///addr = NULL;
      isMemModifiedFlag = false;
-   }
+   }*/
    //jenv->MonitorExit(javaArray);
 
    jenv->ReleasePrimitiveArrayCritical((jarray)javaArray, addrJVM, 0);
@@ -125,7 +140,45 @@ void ArrayBuffer::pin(JNIEnv *jenv){
    if(addr==NULL)
    {
      addr = acl_aligned_malloc ((size_t)lengthInBytes);
- 	 //fprintf(stderr, "Allocated %d bytes at address %x\n",lengthInBytes,(long)addr);
+ 	  //fprintf(stderr, "Allocated %d bytes at address %x\n",lengthInBytes,(long)addr);
+     isMemModifiedFlag = true;
+     memcpy(addr,addrJVM,lengthInBytes);
+   }
+   //jenv->MonitorExit(javaArray);
+   //addrJVM = addr;
+   //jenv->ReleasePrimitiveArrayCritical((jarray)javaArray, addr, 0);
+   //addr = aclPtr;
+   ////////////////////
+   isPinned = JNI_TRUE;
+}
+void ArrayBuffer::pinExplicitRead(JNIEnv *jenv){
+   void *ptr = addr;
+   addr = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
+
+   if(addr!=NULL)
+   {
+     memcpy(addrJVM,addr,lengthInBytes);
+     isMemModifiedFlag = false;
+   }else{
+     addr = acl_aligned_malloc ((size_t)lengthInBytes);
+     //fprintf(stderr, "Allocated %d bytes at address %x\n",lengthInBytes,(long)addr);
+     isMemModifiedFlag = true;
+     memcpy(addr,addrJVM,lengthInBytes);
+   }
+
+   isPinned = JNI_TRUE;
+}
+void ArrayBuffer::pinExplicitWrite(JNIEnv *jenv){
+   void *ptr = addr;
+   // !!! oren mem test
+   //addr = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
+   addrJVM = jenv->GetPrimitiveArrayCritical((jarray)javaArray,&isCopy);
+   //void* aclPtr
+   //jenv->MonitorEnter(javaArray);
+   if(addr==NULL)
+   {
+     addr = acl_aligned_malloc ((size_t)lengthInBytes);
+     //fprintf(stderr, "Allocated %d bytes at address %x\n",lengthInBytes,(long)addr);
    }
    isMemModifiedFlag = true;
    memcpy(addr,addrJVM,lengthInBytes);
