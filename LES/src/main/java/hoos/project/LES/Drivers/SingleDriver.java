@@ -1,10 +1,10 @@
 package hoos.project.LES.Drivers;
-import hoos.project.LES.Kernels.Single;
+import hoos.project.LES.Kernels.SingleCPU;
 
 public class SingleDriver{
 
 	public static void main(String[] _args) {
-		Single kernel = new Single();
+		 SingleCPU kernel = new SingleCPU();
 
 		System.out.printf("Initialising kernel..");
 		

@@ -17,7 +17,7 @@ public class Single extends Base {
 		p2[0] = sum;
 	}
 	
-	public void run(int state) {	
+	public void run(int state) {
 		System.out.println("Kernel running state: " + state);	
 		switch(state) {
 		case 1:
