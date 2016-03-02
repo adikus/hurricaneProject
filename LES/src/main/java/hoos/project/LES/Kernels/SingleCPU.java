@@ -2,7 +2,7 @@ package hoos.project.LES.Kernels;
 
 import com.amd.aparapi.Range;
 
-public class Single extends Base {
+public class SingleCPU extends Base {
 	
 	@Override 
 	public void run() {
