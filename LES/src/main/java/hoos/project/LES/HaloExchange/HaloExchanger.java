@@ -2,8 +2,11 @@ package hoos.project.LES.HaloExchange;
 
 import hoos.project.LES.Kernels.Halos;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
@@ -12,6 +15,8 @@ import scala.Tuple2;
 
 public class HaloExchanger {
 	int im, jm, km, v_dim, X, Y;
+	
+	private static String lastCheckpoint;
 	
 	public HaloExchanger(int im, int jm, int km, int v_dim) {
 		this.im = im;
@@ -179,8 +184,24 @@ public class HaloExchanger {
 				
 			});
 			newKernels.cache();
-			if(checkpoint)newKernels.checkpoint();
+			if(checkpoint){
+				if(lastCheckpoint != null){
+					try {
+						String[] pathParts = lastCheckpoint.split("/");
+						File checkpointDir = new File("temp/" + pathParts[pathParts.length-2] + "/" + pathParts[pathParts.length-1]);
+						
+						FileUtils.forceDelete(checkpointDir.getAbsoluteFile());
+						System.out.println("Deleted old checkpoint: " + checkpointDir);
+					} catch (IOException e) {
+						System.out.println("Failed to delete old checkpoint. " + e);
+					}
+				}
+				newKernels.checkpoint();
+			}
 			newKernels.count();
+			if(checkpoint && newKernels.getCheckpointFile().isPresent()){
+				lastCheckpoint = newKernels.getCheckpointFile().get();
+			}
 			kernels.unpersist();
 			kernels = newKernels;
 		}

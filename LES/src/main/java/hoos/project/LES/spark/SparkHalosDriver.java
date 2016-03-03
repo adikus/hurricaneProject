@@ -1,7 +1,6 @@
 package hoos.project.LES.spark;
 
 import hoos.project.LES.HaloExchange.HaloExchanger;
-import hoos.project.LES.HaloExchange.Neighbour;
 import hoos.project.LES.Kernels.Halos;
 import hoos.project.LES.Kernels.States;
 
@@ -43,8 +42,6 @@ public class SparkHalosDriver {
 		final int ip = 150;
 		final int jp = 150;
 		final int kp = 90;
-
-		System.out.println("Running first map");
 		
 		// Init
 		kernels = kernels.mapValues(new Function<Halos, Halos>() {
@@ -130,7 +127,7 @@ public class SparkHalosDriver {
 				newKernels.cache();
 				newKernels.count();
 				kernels.unpersist();
-				if(iter % 20 == 0){
+				if(iter % 20 == 0 && i == 0){
 					kernels = HaloExchanger.exchangeHalos(newKernels, "p", ip, jp, kp, X, Y, true);
 				}else{
 					kernels = HaloExchanger.exchangeHalos(newKernels, "p", ip, jp, kp, X, Y);
