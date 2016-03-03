@@ -2,7 +2,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/conf.cfg
 
-mvn package
+#mvn package
 export MGRID_PATH=$MGRID_FILE_PATH
 export APARAPI_CL_BIN_FOLDER=$DIR/../cl
 export LES_LIB_PATH=$DIR/../src/main/resources/libles_ocl.so

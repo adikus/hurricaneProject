@@ -303,7 +303,7 @@ public class HalosCPU extends Base implements Serializable {
 		//return (float) Math.sqrt(sor);
 	}
 	
-	private void pavState() {		
+	private void pavState() {
 		this.executeState(States.HALO_WRITE_PRESS_PAV, haloRange);
 		this.executeState(States.PRESS_PAV, Range.create(NTH*computeUnits, NTH));
 		this.executeState(States.HALO_READ_PRESS_PAV, haloRange);

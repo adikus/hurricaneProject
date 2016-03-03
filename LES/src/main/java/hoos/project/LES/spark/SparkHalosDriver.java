@@ -56,6 +56,7 @@ public class SparkHalosDriver {
 		});
 		
 		for(int i = 1; i <= iterationsNum; i++){
+			System.out.println("Start time step " + i);
 			// 1
 			kernels = executeKernelStep(kernels, States.VELNW__BONDV1_INIT_UVW);
 			kernels = HaloExchanger.exchangeHalos(kernels, "p,uvw,uvwsum", ip, jp, kp, X, Y);
@@ -110,7 +111,7 @@ public class SparkHalosDriver {
 	
 	private static JavaPairRDD<Integer, Halos> pressSORState(JavaPairRDD<Integer, Halos> kernels, int ip, int jp, int kp, int X, int Y) {
 		float pjuge = 0.0001f;
-		int nmaxp = 5;
+		int nmaxp = 50;
 		float sor = pjuge * 1.1f;
 		int iter = 0;
 
@@ -129,7 +130,11 @@ public class SparkHalosDriver {
 				newKernels.cache();
 				newKernels.count();
 				kernels.unpersist();
-				kernels = HaloExchanger.exchangeHalos(newKernels, "p", ip, jp, kp, X, Y);
+				if(iter % 20 == 0){
+					kernels = HaloExchanger.exchangeHalos(newKernels, "p", ip, jp, kp, X, Y, true);
+				}else{
+					kernels = HaloExchanger.exchangeHalos(newKernels, "p", ip, jp, kp, X, Y);
+				}
 				
 				if(i == 1){
 					sor = kernels.values().map(new Function<Halos, Float>() {

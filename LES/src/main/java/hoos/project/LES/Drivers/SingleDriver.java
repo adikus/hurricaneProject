@@ -1,5 +1,5 @@
 package hoos.project.LES.Drivers;
-import hoos.project.LES.Kernels.SingleCPU;
+import hoos.project.LES.Kernels.Single;
 
 public class SingleDriver{
 
@@ -10,7 +10,7 @@ public class SingleDriver{
 		}
 		final int iterationsNum = new Integer(args[0]);
 		
-		 SingleCPU kernel = new SingleCPU();
+		Single kernel = new Single();
 
 		System.out.printf("Initialising kernel..");
 		
