@@ -14,11 +14,19 @@ LES/bin/*
 LES/target/*
 LES/temp/*
 LES/work/*
+LES/log.txt
 
 aparapi-ucores/src/aparapi/com.amd.aparapi/dist/*
 aparapi-ucores/src/aparapi/com.amd.aparapi/classes/*
 aparapi-ucores/src/aparapi/com.amd.aparapi.jni/dist/*
 aparapi-ucores/src/aparapi/samples/**/*.jar
+
+report/*.log
+report/*.out
+report/*.blg
+report/*.bbl
+report/*.aux
+report/*.toc
 
 **/*~
 GIS/*
