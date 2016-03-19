@@ -10,9 +10,11 @@
     linkbordercolor={1 0 0},
     urlbordercolor={0 1 1}
 }
+\usepackage[all]{hypcap}
 
 \usepackage{chngcntr}
 \counterwithout{figure}{chapter}
+\counterwithout{table}{chapter}
 
 \usepackage{listings}
 
@@ -31,6 +33,8 @@ breakatwhitespace=false,    % sets if automatic breaks should only happen at whi
 showstringspaces=false,     % Don't show underscores as space characters
 frameround=fttt
 }
+
+\usepackage{caption}
 
 \begin{document}
 \title{Exploring the possibility of accelerating Hurricane Simulator using Apache Spark framework}
@@ -472,11 +476,95 @@ before sending and constructed again after receiving.
 
 Since the spatial domain in this project is considered to be wrapped such that
 bottom connects to top and left connects to right, this halo construction and 
-deconstruction 
+deconstruction can be demostrated on a single node (TODO: diagram). 
 
 \section{LES in Apache Spark}
 
+As a final part of the project implementaion, working LES Aparapi implementation
+needs to be integrated into Spark. MapCogroup described in \autoref{chap:halos}
+is used as the halo exchange algorithm.
+
+Each time step of the simulation is divided into 11 steps, with each step executing
+OpenCL kernel once. The 8th step (\texttt{PRESS\_SOR}) is a exception. 
+In this step the successive over relaxation is run, which requres multiple 
+iterations of kernel executions. Normally the over relaxation is run until 
+the simulation state converges, but in this project it was decided to use constant
+number of 50 iterations.
+
+Each kernel execution needs to be accompanied be a halo write beforehand 
+and halo read afterwards, both of which are an extra kernel execution.
+After each group of halo write, simulation step and halo read the appropriate halos
+should be exchanged over network. In addition some stages do a reduction over 
+the whole domain, which means that a reduction over the nodes needs to be done using Spark.
+
+Table \ref{tab:les_stages} contains the summary of each stage.
+
+\begin{center}
+  \begin{tabular}{ | l | l | l | }
+      \hline
+      \# & Stage & Halo exchange, reduction \\
+      \hline
+      1 & \texttt{VELNW\_\_BONDV1\_INIT\_UVW} & \texttt{p}, \texttt{uvw} and \texttt{uvwum} halo exchange \\
+      2 & \texttt{BONDV1\_CALC\_UOUT} & \texttt{uvw} halo exchange \\
+      3 & \texttt{BONDV1\_CALC\_UVW} & \texttt{uvw} halo exchange \\
+      4 & \texttt{VELFG\_\_FEEDBF\_\_LES\_CALC\_SM} & \texttt{uvw}, \texttt{uvwsum}, \texttt{fgh}, 
+      \texttt{diu} and \texttt{sm} halo exchange \\
+      5 & \texttt{LES\_BOUND\_SM} & \texttt{sm} halo exhange \\
+      6 & \texttt{LES\_CALC\_VISC\_\_ADAM} & \texttt{fgh} and \texttt{fgh\_old} halo exchange \\
+      7 & \texttt{PRESS\_RHSAV} & \texttt{rhs} and \texttt{fgh} halo exchange + reduction \\
+      8 & \texttt{PRESS\_SOR} & 
+      \begin{tabular}[t]{@{}l@{}}
+        \texttt{p} halo exchange, there are three kernel executions for each SOR \\
+         iteration, which means three halo exchanges per iteration \\
+        + one reduction per iteration to determine the convergence value 
+      \end{tabular} \\
+      9 & \texttt{PRESS\_PAV} & \texttt{p} halo exchange + reduction \\
+      10 & \texttt{PRESS\_ADJ} & \texttt{p} halo exchange \\
+      11 & \texttt{PRESS\_BOUNDP} & \texttt{p} halo exchange \\
+      \hline
+  \end{tabular}
+  \captionof{table}{Summary of halo exchanges and reductions for each LES stage in one time step}
+  \label{tab:les_stages}
+\end{center}
+
+Spark collection that contains the kernel hosts consists of key value pairs.
+The key is represented by an integer which has value between 0 and X*Y-1, where X and Y
+are the size of the node grid. For example, if X is 2 and Y is 3, it means we intend to
+run the simulation on cluster with 6 worker nodes, and each node is running a simulation
+on a 150x150x90 size domain. The value in the key value pair is represented by a subclass
+of Aparapi Kernel class.
+
+The neighbours are represent by a Neighbour class which encapsulates the underlying data
+array and the direction from which it came (N,S,W,E,NW,NE,SW,SE).
+
+Finally, helper methods have been created for executing stage of simulation, exchaning halos
+and reductions. This means that a execution of a single simalation stage can be written similarly to:
+
+\begin{lstlisting}
+// 7th stage - PRESS_RHSAV
+kernels = executeKernelStep(kernels, States.PRESS_RHSAV);
+kernels = HaloExchanger.exchangeHalos(kernels, "rhs,fgh", ip, jp, kp, X, Y);
+kernels = divisionReduction(kernels);
+\end{lstlisting}
+
 \subsection{Lineage \& Checkpointing}
+
+The fact that single timestep of the simulation needs to be represented by
+large number of jobs (10 stages * 2 [execution + halo echange] + 50 SOR iterations * 3
+* 2 = 320; this is just an approximation) means that lineage grows very quickly.
+With the recommended rate of chekpointing, which is once per 100 jobs, three 
+checkpoints are created every time step of the simulation. Since one time step
+should not take longer than couple of seconds, this means that large quantity 
+of data is serialized to disk over the run of program.
+
+This can create problems when trying to excute the simulation in environment
+with restricted disk space. Therefore another workaround was devised, which 
+all previous checkpoints before creating a new one. Checkpoints in Spark are used
+to recover from a crash of a node or a similar scenario. However in our case,
+recovering is not as simple as deserializing a class from disk. Further work
+would need to be made to initialise the OpenCL kernel and load the recoverd state 
+of parameters into it, and was deemed to be out of the scope of this project.
+Therefore the checkpoints are completely useless and can be deleted without worry.
 
 %==============================================================================
 %  Evaluation
@@ -516,6 +604,8 @@ TODO: describe the setup, architecture, tests done, results, one or two bar char
 
 The project files that are required to run the parallelised version of LES can be found on GitHub.
 \footnote{\url{https://github.com/adikus/hurricaneProject}}
+
+TODO: Proper instructions, should be mirrored on GH
 
 \end{appendices}
 
