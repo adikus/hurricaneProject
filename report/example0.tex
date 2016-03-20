@@ -37,7 +37,7 @@ frameround=fttt
 \usepackage{caption}
 
 \begin{document}
-\title{Exploring the possibility of accelerating Hurricane Simulator using Apache Spark framework}
+\title{Exploring the possibility of accelerating Hurricane Simulator \\ using Apache Spark framework}
 \author{Andrej Hoos}
 %\date{March ???, 2016}
 \maketitle
@@ -141,11 +141,11 @@ and more importantly there is a limit to how big the grid can be so that it fits
 Using a cluster of computers, we can split the domain such that every node in the cluster runs
 LES on a small portion of the domain. This allows to run LES on much larger domain than what would be
 possible on a single computer. To run LES correctly in this scenario, each node needs access to the 
-edge data belonging to each of its eight neighbours (Figure \ref{fig:neighbours}).
+edge data belonging to each of its eight neighbours (figure \ref{fig:neighbours}).
 
 \begin{figure}
 \centering
-\includegraphics[width=0.5\textwidth]{images/neighbours.png}
+\includegraphics[width=0.7\textwidth]{images/Neighbour_exchange.eps}
 \caption{Node (x,y) needs access to the edges of all its neighbours}
 \label{fig:neighbours}
 \end{figure}
@@ -244,7 +244,14 @@ create a broadcast variable in the driver program, which is the shipped to worke
 nodes if needed. However the limitation is that only the driver program can create
 broadcast variables (i.e. they cannot be created in the worker code) and therefore
 the workers would need to send their edge data to the driver program, which would
-contruct the appropriate halos and create a broadcast variable(TODO: diagram).
+contruct the appropriate halos and create a broadcast variable(figure \ref{fig:broadcast}).
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{images/Broadcast_variable.eps}
+\caption{Diagram of the the algorithm using broadcast variables}
+\label{fig:broadcast}
+\end{figure}
 
 This means that the halos would be transferred to their destination always via
 the node which hosts the driver program, and therefore the algorithm would do 
@@ -253,9 +260,16 @@ to their destination directly. Therefore this approach was deemed unsuitable.
 
 \section{MapReduceByKey}
 
-Another way is to use a combination of map and reduce steps (TODO: diagram). To represent the 
+Another way is to use a combination of map and reduce steps (figure \ref{fig:map_reduce}). To represent the 
 chunks, we use Spark Pair Collection of pairs of key and chunk (\texttt{JavaPairRDD<String, Chunk>}). The key represents
 the coordinates of the chunk.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{images/MapReduce.eps}
+\caption{Diagram of the the MapReduceByKey algorithm}
+\label{fig:map_reduce}
+\end{figure}
 
 In the first stage we transform this collection into another collection which contains
 the chunks from the original collection together with all neighbours using map
@@ -281,7 +295,7 @@ transferred over network, which is unacceptable for the purpouses of this projec
 \section{MapGroupByKey}
 
 To resolve one of the issues mentioned above, it is possible to replace the reduce
-step with group step (TODO: diagram). This uses \texttt{groupByKey} to group chunk together with
+step with group step (figure \ref{fig:map_group}). This uses \texttt{groupByKey} to group chunk together with
 neighbours that share the same key. The grouping function takes the chunk with
 its neighbours and combines them into a single chunk, such that the result is the
 same as after the reduce step in previous section.
@@ -290,6 +304,13 @@ Using this method the issue of the order of execution is solved, since the group
 can be executed only after all of first map stage has been executed. The second issue
 of not being able to control where is each stage executed still remains and therefore
 the issue of transferring all chunk over network remains as well.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{images/MapGroup.eps}
+\caption{Diagram of the the MapGroupByKey algorithm}
+\label{fig:map_group}
+\end{figure}
 
 \section{MapCogroup}
 
@@ -300,7 +321,7 @@ of map and cogroup steps.
 
 The first map operates on the same key value pair collection as above. However,
 now it transforms the collection into separate key value pair collection of neighbours,
-instead of creating one mixed one as was done previously (TODO: diagram).
+instead of creating one mixed one as was done previously (figure \ref{fig:map_cogroup}).
 
 In second step, the \texttt{cogroup} transformation is very similar to the grouping transformation
 from the MapGroupByKey method, with the difference that in this case it operates on two collections 
@@ -311,6 +332,13 @@ The partitioner takes the key, which represents coordinates and outputs index of
 on which the chunk should be physically present. Using this partitioner spark
 shuffles only the other collection, which contains neighbour data, over network and
 keeps the chunks collection in place.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{images/MapCogroup.eps}
+\caption{Diagram of the the MapCogroup algorithm}
+\label{fig:map_cogroup}
+\end{figure}
 
 \section{Caching and checkpointing}
 
@@ -476,7 +504,14 @@ before sending and constructed again after receiving.
 
 Since the spatial domain in this project is considered to be wrapped such that
 bottom connects to top and left connects to right, this halo construction and 
-deconstruction can be demostrated on a single node (TODO: diagram). 
+deconstruction can be demostrated on a single node (figure \ref{fig:halo_exchange}).
+
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{images/Neighbour_exchange_2.eps}
+\caption{Diagram of halo echange on a single node}
+\label{fig:halo_exchange}
+\end{figure}
 
 \section{LES in Apache Spark}
 
@@ -548,6 +583,7 @@ kernels = divisionReduction(kernels);
 \end{lstlisting}
 
 \subsection{Lineage \& Checkpointing}
+\label{chap:lineage_n_checkpointing}
 
 The fact that single timestep of the simulation needs to be represented by
 large number of jobs (10 stages * 2 [execution + halo echange] + 50 SOR iterations * 3
@@ -572,16 +608,82 @@ Therefore the checkpoints are completely useless and can be deleted without worr
 \chapter{Evaluation}
 \label{chap:eval}
 
-TODO: describe the setup, architecture, tests done, results, one or two bar charts..., easy stuff, skipping for now
+Evaluation in this chapter was done to determine, whether the approach to parallelisation
+developed in this project is a competitive alternative to MPI.
+
+Small number of tests was run without Spark to determine the true runtime of
+the simulation without overheard caused by Spark.
+
+The final tests were done on a network cluster, with number of nodes varying from one
+to eight. However only very small number of tests was conducted, due to 
+project timing issues (too close to deadline). Under normal circumstances,
+tests with higher number of nodes and different number of time steps would be run.
+In addition, all tests would be run multiple times.
 
 \section{Architecture}
 
-\footnote{\url{http://ark.intel.com/products/75267/Intel-Xeon-Processor-E5-2640-v2-20M-Cache-2_00-GHz}}
-
+All tests were done on GPG cluster of CS department at University of Glasgow
+\footnote{\url{http://www.dcs.gla.ac.uk/research/gpg/cluster.htm}}.
+The cluster consists of 20 nodes, each having 64GB of RAM and 2 Intel Xeon processors
+\footnote{\url{http://ark.intel.com/products/75267/Intel-Xeon-Processor-E5-2640-v2-20M-Cache-2_00-GHz}}.
+Three nodes of the cluster are availble to public and therefore only the rest 17 are
+suitable for running experiments.
 
 \section{Baseline tests}
 
+Two baseline tests were done. First runs LES as it would be run without any
+parallelisation over network. Second does the same, but adds halo writes and reads
+as well as simple halo exchanges as show in figure \ref{fig:halo_exchange}.
+Another test was done using Spark standalone mode. In this mode all driver 
+program, Spark master and Spark worker work in a single container. Each test was run twice and 
+all tests were run using 100 time steps. The results measured using the \texttt{time} command
+can be seen in table \ref{tab:baseline_times}. Commands used to run these tests can be seen below:
+\begin{verbatim}
+  path-to-project/LES$ bash scripts/single.sh 100
+  path-to-project/LES$ bash scripts/halos.sh 100
+  path-to-project/LES$ bash scripts/spark_cpu_standalone.sh 100 1 1
+\end{verbatim}
+
+\begin{center}
+  \begin{tabular}{ | l | l | l | }
+      \hline
+      Test & Run time \#1 & Run time \#2 \\
+      \hline
+      Single LES & 0m41.216s & 0m40.146s \\
+      LES with simple halos & 1m13.313s & 1m14.676s \\
+      Spark standalone & 22m17.929s & 22m34.030s \\
+      \hline
+  \end{tabular}
+  \captionof{table}{Summary of halo exchanges and reductions for each LES stage in one time step}
+  \label{tab:baseline_times}
+\end{center}
+
 \section{Spark tests - increasing domain size}
+
+The final tests done using spark were done on varying number of nodes.
+The aim is to increase the total domain size by increasing the number of nodes.
+Each node runs computaion on a domain of size 150x150x90, which means that the simulation
+on 8 nodes with configuration 2x4 will have total domain size 300x600x90. Spark master
+and the driver program were run on a cluster node separate from the other nodes.
+Each test was run only once and on 100 time steps. The results measured using the \texttt{time} command
+can be seen in figure TODO. Commands used to run these tests can be seen below
+(see appendix \ref{chap:running} to find out how to run Spark master and workers):
+\begin{verbatim}
+  path-to-project/LES$ bash scripts/spark-submit.sh 100 X Y
+\end{verbatim}
+where X and Y are the sizes of the node grid.
+
+TODO: bar chart
+
+\section{Discussion}
+
+The tests report about 20x slowdown of the run simulation run with Spark compared to
+the baseline. Overhead caused by spark seems to be too high when comparing it to time spent 
+in the simulation. In addition, a linear increase in run time with increasing number of nodes
+can be observed. This means that as is, the approach taken in this project might not
+be suitable to parallelising LES. However, due to very small number of tests, 
+this is not a conclusive result. The next chapter goes into detail as to what test
+to do to make a proper conclusion.
 
 %==============================================================================
 %  Conclusion
@@ -591,7 +693,63 @@ TODO: describe the setup, architecture, tests done, results, one or two bar char
 
 \section{Future Work}
 
+While this project has proven that it is indeed possible to parallelise LES
+on a network cluster using Apache Spark, the first evaluation results are
+not favourable. However there is still some testing and evaluation to be done
+to determine whether using this approach to paralellisation of LES is usable.
+
+\subsection{Spark overhead}
+
+The biggest issue that is causing the adverse performance seems to be overhead
+caused by Spark. While single kernel execution, together with one halo write and
+one halo read takes the order of tens of milliseconds, the time it takes Spark
+to run the task and exchange the halos seems to be much higher. Spark reports
+task time to be be less than half of the overall execution time, which means
+that most time is spent scheduling task, resolving lineage and network transfers.
+
+One approach to decrease the overhead could be to try different versions of Spark.
+Evaluation in this project was done using version 1.4.1, however since Spark 
+seems to be rapidly moving project, there are already newer versions (1.5, 1.6), which could have 
+better performance.
+
+Another approach is to increase kernel execution. This could be done by increasing
+domain size per node. This would be decrease the ratio of Spark overhead time to 
+execution time, which would decrease the overall slowdown from 15-20x to 
+something more managable. The cluster on which the evaluation was done, has 64GB
+of memory per node available and during the evalution just above tenth of that
+has been used, so increasing the domain is a viable strategy.
+
+\subsection{Checkpointing}
+
+Another factor resulting in the poor performance is the frequent checkpointing
+(mentioned in \autoref{chap:lineage_n_checkpointing}). The fact the the program
+is writing checkpoints to disk means that a lot of time is spent waiting until
+it is finished. One possible solution is to write to a faster medium. In the evaluation
+the checkpoint directory was on a Network File System, which means that even 
+writing to noral HDD might improve the performace. Other options are using SSD
+or even mounted ramfs. The best approach, however, would be to disable checkpointing
+entirely. While this is not possible in Spark currently, it is possible to rewrite 
+the source code, since Spark is an open source project.
+
+\subsection{Evaluation on massively parallel cluster}
+
+The evaluation done in this project was done on eight nodes as the largest test.
+While the results show almost linear increase in computational time with
+increasing number of nodes, it cannot be assumed that this trend continues.
+Therefore it is important to test the simulation on cluster with tens, hundreds,
+or potentially even thounsands nodes. If the compuation proves to scale well
+on such large clusters, the current slowdown would be offset by the 
+possibility of running the simulation on much larger domain than what is
+currently possible.
+
 \section{Summary}
+
+The aim of this project was to explore whether it is possible to parallelise 
+LES using Apache Spark. The produced result proves that it is possible, but only 
+with a large performance tradeoff. While it allows to run the simulation on larger
+domain and provides a way to nicely abstract the halo exchanges, at the current stage
+it does not provide suitable alternative to MPI. However, further work is needed
+to determine, whether the limitations discovered in this project can be overcome.
 
 %%%%%%%%%%%%%%%%
 %              %
@@ -600,7 +758,10 @@ TODO: describe the setup, architecture, tests done, results, one or two bar char
 %%%%%%%%%%%%%%%%
 \begin{appendices}
 
+\chapter{File structure}
+
 \chapter{Running the simulation}
+\label{chap:running}
 
 The project files that are required to run the parallelised version of LES can be found on GitHub.
 \footnote{\url{https://github.com/adikus/hurricaneProject}}
