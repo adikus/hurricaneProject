@@ -27,6 +27,7 @@ report/*.blg
 report/*.bbl
 report/*.aux
 report/*.toc
+report/.ipynb_checkpoints
 
 **/*~
 GIS/*

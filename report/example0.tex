@@ -4,7 +4,7 @@
 
 \usepackage{hyperref}
 \hypersetup{
-	colorlinks=false,
+  colorlinks=false,
     citebordercolor={0 1 0},
     filebordercolor={1 1 0},
     linkbordercolor={1 0 0},
@@ -87,7 +87,7 @@ Recently, there has been a rise in a new computational frameworks focused on wor
 distributed environment. One of these frameworks is Apache Spark which is based on
 the MapReduce parallel execution paradigm.
 
-The aim of this report is to explore the possibility of using the Apache Spark in Java to parallelize
+The aim of this report is to explore the possibility of using the Apache Spark in Java to parallelise
 LES, or any algorithm relying on halo exchanges in network distributed environment.
 
 \section{Outline}
@@ -112,14 +112,14 @@ Disaster Prevention Research Institute of Kyoto University is a high resolution
 meteorological simulator designed to model turbulent flows over urban topologies. 
 It achieves this by using mesoscale meteorological simulations and building resolving
 large-eddy simulations. It also uses The Weather Research and Forecasting Model \footnote{\url{http://www.wrf-model.org}}
-to compute the wind proile as an input for the simulation. The simulation is split into
+to compute the wind profile as an input for the simulation. The simulation is split into
 multiple subroutines, however, the most important one is the Poisson Equation solver.
 This is the most computationally intensive subroutine and it uses successive over relaxation to solve
 a linear system of equations. Each time step of the simulation needs to execute following subroutines
 in a sequence:
 
 \begin{tabular}{ | l | l | }
-  \hline	
+  \hline  
   \textbf{velnw} & Update velocity for current time step \\
   \textbf{bondv1} & Calculate boundary conditions (initial wind profile, inflow, outflow) \\
   \textbf{velfg} & Calculate the body force \\
@@ -127,16 +127,16 @@ in a sequence:
   \textbf{les} & Calculation of viscosity terms (Smagorinsky model) \\
   \textbf{adam} & Adams-Bashforth time integration \\
   \textbf{press} & Solving of Poisson equation (SOR) \\
-  \hline	
+  \hline  
 \end{tabular}
 
-LES runs over spatial domain represent by a 3D grid. Size of 150x150x90 is used	for the most
+LES runs over spatial domain represent by a 3D grid. Size of 150x150x90 is used for the most
 of this report, but the size can be varied in x and y direction. By increasing the size of the
-grid in x and y directions, LES can be run with higher resulution, or it can used 
+grid in x and y directions, LES can be run with higher resolution, or it can used 
 to cover larger area. However doing this increases the time needed to complete the simulation
 and more importantly there is a limit to how big the grid can be so that it fits inside the RAM.
 
-\subsection{Paralellisation}
+\subsection{Parallelisation}
 
 Using a cluster of computers, we can split the domain such that every node in the cluster runs
 LES on a small portion of the domain. This allows to run LES on much larger domain than what would be
@@ -158,12 +158,11 @@ experience with Computing Science. Therefore it is important to investigate the 
 of using frameworks with higher level abstraction and that are easy to deploy onto a standard
 network cluster.
 
-
 \section{MapReduce parallel processing}
 
 MapReduce is a programming model used mainly for processing large quantities of data
 and is intended for network clusters\cite{map_reduce}. Program using this model consists of Map and Reduces
-methods which are automatically paralellised. MapReduce was originally name of a technology by
+methods which are automatically parallelised. MapReduce was originally name of a technology by
 Google, but is now used for the model in general. MapReduce libraries and frameworks are now 
 available in many programming languages.
 
@@ -171,7 +170,7 @@ MapReduce model usually operates on key-value pairs and can be described by thre
 
 \begin{itemize}  
 \item \textbf{Map}: \textbf{map()} function is applied to all of the pairs, creating a collection of new key-value pairs
-\item \textbf{Shuffle}: the output data is redistributed accross network such that pairs with the same key are located on the same node
+\item \textbf{Shuffle}: the output data is redistributed across network such that pairs with the same key are located on the same node
 \item \textbf{Reduce}: the output data is processed by applying the \textbf{reduce()} function to the output pairs
 \end{itemize}
 
@@ -184,9 +183,9 @@ joining.
 
 Apache Spark\footnote{\url{http://spark.apache.org/}} is one of these frameworks and is available Java, Scala, Python and R. It claims
 to be faster over alternatives such as Apache Hadoop, because it allows MapReduce to run in
-memory as opposed to reading and writing inputs and outpus solely from disk. This, with combination
+memory as opposed to reading and writing inputs and outputs solely from disk. This, with combination
 that is the increasing community and high-level abstraction makes this framework suitable for the purposes
-of this project.	
+of this project.  
 
 TODO: Describe main points about how Spark works (master, worker, driver, RDDs...)
 
@@ -215,13 +214,13 @@ Multiple possible algorithms were considered and their implementation details, a
 and drawbacks are discussed in this chapter.
 
 \section{Game of Life as a proof of concept}
-To test the proposed alorithms, a implemetation of Conway's Game of Life was used.
+To test the proposed algorithms, a implementation of Conway's Game of Life was used.
 This was because of its simplicity and becasue it resembles the simulator in that
 in needs data from neighbours to be transfered in order to be parallelised in 
 distributed environment.
 
 The Game of Life is a cellular automaton and is run on a 2D grid of cells. To compute
-the transition of a single cell, state of each of its eight neigbours are needed.
+the transition of a single cell, state of each of its eight neighbours are needed.
 The transitions are defined as:
 
 \begin{itemize} 
@@ -290,7 +289,7 @@ might decide to execute the first map step on first two chunks (assuming there a
 and run the reduce step on the results. Then, the first map step might be run on the rest
 of the chunks. The second issue is that we cannot control, on which node is each step 
 executed. This two issues result in all of the chunks and not only neighbours are
-transferred over network, which is unacceptable for the purpouses of this project.
+transferred over network, which is unacceptable for the purposes of this project.
 
 \section{MapGroupByKey}
 
@@ -363,7 +362,7 @@ in this report, the lineage that Spark keeps in order to be able to restore exec
 in the case of failure can get quite long. This results in significant slowdown of
 Spark task resolution and eventually leads to stack overflow errors. One possible
 solution is to increase JVM maximum stack memory, but the standard practice is to
-\texttt{chekpoint} collections. This serializes the collection to disk and forgets
+\texttt{chekpoint} collections. This serialises the collection to disk and forgets
 its lineage.
 
 %==============================================================================
@@ -381,9 +380,9 @@ written Java OpenCL host code needs to be integrated with Spark.
 
 \section{JNA with Fortran}
 
-LES works with about 40 different variables that store states of diferent systems,
+LES works with about 40 different variables that store states of different systems,
 wind velocity, pressure, halos and grid constants. These variables need to be initialised
-before the ex ecution of the simulation. This process is covered in a substantial part of
+before the execution of the simulation. This process is covered in a substantial part of
 the Fortran source code.
 
 Since accessing the existing Fortran subroutines is a viable strategy
@@ -406,9 +405,9 @@ it allows running OpenCL kernels from precompiled binaries.
 Aparapi allows to write Java code which is then translated into OpenCL kernel code
 and executed. However, since the LES kernel code is already written, this is 
 counterproductive. It is impossible to disable this behaviour and therefore a 
-workaround is neccessary. Although, with binary flow, which is provided by Aparapi-ucores
+workaround is necessary. Although, with binary flow, which is provided by Aparapi-ucores
 it is possible to execute compiled binary of the provided kernel instead of 
-kernel generated by Aparapi, Aparapi will ecpect the same method signature as 
+kernel generated by Aparapi, Aparapi will expect the same method signature as 
 the one the generated kernel has. Therefore it is needed to provide Aparapi with
 dummy Java code, that translates into correct OpenCL method signature.
 This can be achieved by using all parameters in correct order, the parameters
@@ -441,7 +440,7 @@ __kernel void run(
 \end{lstlisting}
 In the example above, four kernel parameters are used. All are arrays of floats.
 Note that the order in which they are listed in the sum in the first line of the 
-\texttt{run} method, is the same as the order of the paramters in the signature.
+\texttt{run} method, is the same as the order of the parameters in the signature.
 In addition the \texttt{uvw} and \texttt{uvwsum} variables were assigned into,
 which marks them as kernel-writable inside Aparapi. Also, important to note,
 is final parameter \texttt{passid}, which is being automatically inserted by Aparapi,
@@ -450,7 +449,7 @@ and contains the id of the current kernel execution.
 Due to the nature, there are some modification that need to be done to the OpenCL
 kernel, before compiling into a binary. First, the \texttt{passid} needs to be added to
 the parameter list. Second, Aparapi does not support passing non-constant scalar fields
-into the kernel as paramter. As a workaround to this, scalar fields can be represented
+into the kernel as parameter. As a workaround to this, scalar fields can be represented
 as simple single item 1D arrays. Finally the name of the kernel method is restricted to
 the name \texttt{run}. As of writing of this report, however, this was found not to be true
 and it is possible to use different names, but the written code does not reflect this.
@@ -458,7 +457,7 @@ and it is possible to use different names, but the written code does not reflect
 By default, Aparapi copies all parameters to and from kernel before and after every kernel
 execution. This is due to large number of parameters in LES undesirable. Therefore, for
 iterative applications, it is recommend to enable explicit Aparapi mode, which then requires
-the programmer to call \texttt{put} and \texttt{get} methods to explicitely write and read 
+the programmer to call \texttt{put} and \texttt{get} methods to explicitly write and read 
 parameters to and from the kernel.
 
 \subsection{Device specific OpenCL binaries}
@@ -481,17 +480,17 @@ Aparapi-ucores contains functionality which copies the contents of the parameter
 into a memory aligned location. This is done because some devices such as FPGAs
 do not interact well with unaligned memory locations, and locations in JVM heap
 might not be aligned. This functionality is currently experimental, and allocates 
-new memory for every kernel-writeable parameter every kernel execution. In addition
+new memory for every kernel-writable parameter every kernel execution. In addition
 it copies the content of parameters from the original JVM memory location to this new 
 location and back every kernel execution for every parameter. This results in a significant 
 slowdown in execution, which is undesirable.
 
 This functionality can be turned of, since in theory, using unaligned parameters
-should not pose any issues when runnning the kernel on CPUs and GPUs. However,
+should not pose any issues when running the kernel on CPUs and GPUs. However,
 after switching this functionality it was found, that the kernel no longer runs
 properly on Intel CPU. The reason remains, as of writing of this report, unknown,
 and therefore it was decided to modify the underlying Aparapi-ucores C++ source code
-to create a workaroad that deals with the excesive memory copies. The workaround
+to create a workaround that deals with the excessive memory copies. The workaround
 allocates the aligned memory location only once and copies the memory from or to it
 only when the \texttt{get} or \texttt{put} Aparapi methods are called.
 
@@ -504,18 +503,18 @@ before sending and constructed again after receiving.
 
 Since the spatial domain in this project is considered to be wrapped such that
 bottom connects to top and left connects to right, this halo construction and 
-deconstruction can be demostrated on a single node (figure \ref{fig:halo_exchange}).
+deconstruction can be demonstrated on a single node (figure \ref{fig:halo_exchange}).
 
 \begin{figure}
 \centering
 \includegraphics[width=0.5\textwidth]{images/Neighbour_exchange_2.eps}
-\caption{Diagram of halo echange on a single node}
+\caption{Diagram of halo change on a single node}
 \label{fig:halo_exchange}
 \end{figure}
 
 \section{LES in Apache Spark}
 
-As a final part of the project implementaion, working LES Aparapi implementation
+As a final part of the project implementation, working LES Aparapi implementation
 needs to be integrated into Spark. MapCogroup described in \autoref{chap:halos}
 is used as the halo exchange algorithm.
 
@@ -544,7 +543,7 @@ Table \ref{tab:les_stages} contains the summary of each stage.
       3 & \texttt{BONDV1\_CALC\_UVW} & \texttt{uvw} halo exchange \\
       4 & \texttt{VELFG\_\_FEEDBF\_\_LES\_CALC\_SM} & \texttt{uvw}, \texttt{uvwsum}, \texttt{fgh}, 
       \texttt{diu} and \texttt{sm} halo exchange \\
-      5 & \texttt{LES\_BOUND\_SM} & \texttt{sm} halo exhange \\
+      5 & \texttt{LES\_BOUND\_SM} & \texttt{sm} halo exchange \\
       6 & \texttt{LES\_CALC\_VISC\_\_ADAM} & \texttt{fgh} and \texttt{fgh\_old} halo exchange \\
       7 & \texttt{PRESS\_RHSAV} & \texttt{rhs} and \texttt{fgh} halo exchange + reduction \\
       8 & \texttt{PRESS\_SOR} & 
@@ -572,8 +571,8 @@ of Aparapi Kernel class.
 The neighbours are represent by a Neighbour class which encapsulates the underlying data
 array and the direction from which it came (N,S,W,E,NW,NE,SW,SE).
 
-Finally, helper methods have been created for executing stage of simulation, exchaning halos
-and reductions. This means that a execution of a single simalation stage can be written similarly to:
+Finally, helper methods have been created for executing stage of simulation, exchanging halos
+and reductions. This means that a execution of a single simulation stage can be written similarly to:
 
 \begin{lstlisting}
 // 7th stage - PRESS_RHSAV
@@ -586,19 +585,19 @@ kernels = divisionReduction(kernels);
 \label{chap:lineage_n_checkpointing}
 
 The fact that single timestep of the simulation needs to be represented by
-large number of jobs (10 stages * 2 [execution + halo echange] + 50 SOR iterations * 3
+large number of jobs (10 stages * 2 [execution + halo exchange] + 50 SOR iterations * 3
 * 2 = 320; this is just an approximation) means that lineage grows very quickly.
 With the recommended rate of chekpointing, which is once per 100 jobs, three 
 checkpoints are created every time step of the simulation. Since one time step
 should not take longer than couple of seconds, this means that large quantity 
-of data is serialized to disk over the run of program.
+of data is serialised to disk over the run of program.
 
-This can create problems when trying to excute the simulation in environment
+This can create problems when trying to execute the simulation in environment
 with restricted disk space. Therefore another workaround was devised, which 
 all previous checkpoints before creating a new one. Checkpoints in Spark are used
 to recover from a crash of a node or a similar scenario. However in our case,
-recovering is not as simple as deserializing a class from disk. Further work
-would need to be made to initialise the OpenCL kernel and load the recoverd state 
+recovering is not as simple as deserialising a class from disk. Further work
+would need to be made to initialise the OpenCL kernel and load the recovered state 
 of parameters into it, and was deemed to be out of the scope of this project.
 Therefore the checkpoints are completely useless and can be deleted without worry.
 
@@ -626,7 +625,7 @@ All tests were done on GPG cluster of CS department at University of Glasgow
 \footnote{\url{http://www.dcs.gla.ac.uk/research/gpg/cluster.htm}}.
 The cluster consists of 20 nodes, each having 64GB of RAM and 2 Intel Xeon processors
 \footnote{\url{http://ark.intel.com/products/75267/Intel-Xeon-Processor-E5-2640-v2-20M-Cache-2_00-GHz}}.
-Three nodes of the cluster are availble to public and therefore only the rest 17 are
+Three nodes of the cluster are available to public and therefore only the rest 17 are
 suitable for running experiments.
 
 \section{Baseline tests}
@@ -662,18 +661,23 @@ can be seen in table \ref{tab:baseline_times}. Commands used to run these tests 
 
 The final tests done using spark were done on varying number of nodes.
 The aim is to increase the total domain size by increasing the number of nodes.
-Each node runs computaion on a domain of size 150x150x90, which means that the simulation
+Each node runs computation on a domain of size 150x150x90, which means that the simulation
 on 8 nodes with configuration 2x4 will have total domain size 300x600x90. Spark master
 and the driver program were run on a cluster node separate from the other nodes.
 Each test was run only once and on 100 time steps. The results measured using the \texttt{time} command
-can be seen in figure TODO. Commands used to run these tests can be seen below
+can be seen in figure \ref{fig:eval}. Commands used to run these tests can be seen below
 (see appendix \ref{chap:running} to find out how to run Spark master and workers):
 \begin{verbatim}
   path-to-project/LES$ bash scripts/spark-submit.sh 100 X Y
 \end{verbatim}
 where X and Y are the sizes of the node grid.
 
-TODO: bar chart
+\begin{figure}
+\centering
+\includegraphics[width=1\textwidth]{images/evaluation.png}
+\caption{Bar chart with runtimes of the 100 steps of simulation for various node configurations}
+\label{fig:eval}
+\end{figure}
 
 \section{Discussion}
 
@@ -696,7 +700,7 @@ to do to make a proper conclusion.
 While this project has proven that it is indeed possible to parallelise LES
 on a network cluster using Apache Spark, the first evaluation results are
 not favourable. However there is still some testing and evaluation to be done
-to determine whether using this approach to paralellisation of LES is usable.
+to determine whether using this approach to parallelisation of LES is usable.
 
 \subsection{Spark overhead}
 
@@ -715,8 +719,8 @@ better performance.
 Another approach is to increase kernel execution. This could be done by increasing
 domain size per node. This would be decrease the ratio of Spark overhead time to 
 execution time, which would decrease the overall slowdown from 15-20x to 
-something more managable. The cluster on which the evaluation was done, has 64GB
-of memory per node available and during the evalution just above tenth of that
+something more manageable. The cluster on which the evaluation was done, has 64GB
+of memory per node available and during the evaluation just above tenth of that
 has been used, so increasing the domain is a viable strategy.
 
 \subsection{Checkpointing}
@@ -726,7 +730,7 @@ Another factor resulting in the poor performance is the frequent checkpointing
 is writing checkpoints to disk means that a lot of time is spent waiting until
 it is finished. One possible solution is to write to a faster medium. In the evaluation
 the checkpoint directory was on a Network File System, which means that even 
-writing to noral HDD might improve the performace. Other options are using SSD
+writing to standard HDD might improve the performance. Other options are using SSD
 or even mounted ramfs. The best approach, however, would be to disable checkpointing
 entirely. While this is not possible in Spark currently, it is possible to rewrite 
 the source code, since Spark is an open source project.
@@ -737,7 +741,7 @@ The evaluation done in this project was done on eight nodes as the largest test.
 While the results show almost linear increase in computational time with
 increasing number of nodes, it cannot be assumed that this trend continues.
 Therefore it is important to test the simulation on cluster with tens, hundreds,
-or potentially even thounsands nodes. If the compuation proves to scale well
+or potentially even thousands nodes. If the computation proves to scale well
 on such large clusters, the current slowdown would be offset by the 
 possibility of running the simulation on much larger domain than what is
 currently possible.
@@ -746,7 +750,7 @@ currently possible.
 
 The aim of this project was to explore whether it is possible to parallelise 
 LES using Apache Spark. The produced result proves that it is possible, but only 
-with a large performance tradeoff. While it allows to run the simulation on larger
+with a large performance trade off. While it allows to run the simulation on larger
 domain and provides a way to nicely abstract the halo exchanges, at the current stage
 it does not provide suitable alternative to MPI. However, further work is needed
 to determine, whether the limitations discovered in this project can be overcome.
@@ -775,7 +779,7 @@ TODO: Proper instructions, should be mirrored on GH
 %%%%%%%%%%%%%%%%%%%%
 
 \bibliographystyle{plain}
-\bibliography{bib}	
+\bibliography{bib}  
 
 %%%%%%%%%%%%%%%%%%%
 %   ???????????   %
