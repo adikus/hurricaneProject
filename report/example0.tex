@@ -10,13 +10,14 @@
     linkbordercolor={1 0 0},
     urlbordercolor={0 1 1}
 }
-\usepackage[all]{hypcap}
+\usepackage{caption}
+%\usepackage[all]{hypcap}
+\usepackage{listings}
 
 \usepackage{chngcntr}
 \counterwithout{figure}{chapter}
 \counterwithout{table}{chapter}
-
-\usepackage{listings}
+\AtBeginDocument{\counterwithout{lstlisting}{chapter}}
 
 \lstset{ %
 basicstyle=\scriptsize\ttfamily,     % the size of the fonts that are used for the code
@@ -33,8 +34,6 @@ breakatwhitespace=false,    % sets if automatic breaks should only happen at whi
 showstringspaces=false,     % Don't show underscores as space characters
 frameround=fttt
 }
-
-\usepackage{caption}
 
 \begin{document}
 \title{Exploring the possibility of accelerating Hurricane Simulator \\ using Apache Spark framework}
@@ -187,11 +186,100 @@ memory as opposed to reading and writing inputs and outputs solely from disk. Th
 that is the increasing community and high-level abstraction makes this framework suitable for the purposes
 of this project.  
 
-TODO: Describe main points about how Spark works (master, worker, driver, RDDs...)
+Every Spark program consists of a driver program and a worker node(s). When Spark is
+used in cluster mode, a cluster manager is also required (figure \ref{fig:spark}). Cluster manager allocates resources
+accross nodes and is usually referred to as Spark master in this report. The driver program
+Once the driver program connects to the cluster, it aquires executors on the worker nodes and
+starts sending tasks for them to execute.
+
+The driver program runs the user's main function and allows to run parallel operations on the cluster.
+The main abstraction provided by spark is represented by resilient distributed dataset (RDD). RDD is
+a collection of elements which is automatically distributed across the cluster that can be operated on
+in parallel.
+
+Listing \ref{lst:spark} shows an example Spark program which loads a textfile and creates a RDD
+containing words from the file. It then uses \texttt{mapToPair} to create key value pairs, where 
+key is a word a value is count and then produces counts of each word by using \texttt{reduceByKey}.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/spark.png}
+\caption{Apache Spark cluster components overview \protect\footnotemark}
+\label{fig:spark}
+\end{figure}
+\footnotetext{\url{http://spark.apache.org/docs/1.4.1/cluster-overview.html}}
+
+\begin{figure}
+  \lstset{caption={Example Spark program},label={lst:spark}}
+  \begin{lstlisting}[language=Java]
+  SparkConf conf = new SparkConf().setAppName(appName).setMaster(master);
+  JavaSparkContext sc = new JavaSparkContext(conf);
+
+  JavaRDD<String> textFile = sc.textFile("...");
+  JavaRDD<String> words = textFile.flatMap(new FlatMapFunction<String, String>() {
+    public Iterable<String> call(String s) { return Arrays.asList(s.split(" ")); }
+  });
+  JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
+    public Tuple2<String, Integer> call(String s) { return new Tuple2<String, Integer>(s, 1); }
+  });
+  JavaPairRDD<String, Integer> counts = pairs.reduceByKey(new Function2<Integer, Integer, Integer>() {
+    public Integer call(Integer a, Integer b) { return a + b; }
+  });
+  counts.saveAsTextFile("...");
+  \end{lstlisting}
+\end{figure}
 
 \section{OpenCL}
 
-TODO: OpenCL background\footnote{\url{https://www.khronos.org/opencl/}}
+OpenCL is a framework that allows to writing parallelised software on various computational
+platforms, such as CPUs, GPUs and hardware accelerators. OpenCL uses own programming language
+based on C99 for executing programs called kernels on these platforms. These kernels can be run \
+accross mutiple devices with almost no modification. The differences in code for different devices are 
+usually because of different feature set (e.g. double floating point precision support), or
+different performance of specific operations.
+
+\subsection{Structure overview}
+
+OpenCL\footnote{\url{https://www.khronos.org/opencl/}} architecture consists 
+of a host and a computational device connected to the host.
+The host is usually the CPU and it hadnles the initialisation, allocating memory, queuing work
+and harvesting of results from the computational device. The computation devices usually has one
+or more compute units and each compute unit consists of multiple processing elements. A single kernel
+execution usually runs on multiple processing elements in parallel.
+
+A work item is the smallest control flow unit in the OpenCL architecture. A work group is a 
+collection of related work items, which execute the same kernel and share local memory.
+The size of the work group is limited by the underlying device and can usually consist of up to 
+three dimensions.
+
+When executing the kernel, the host code specifies the global work size. The host can specify 
+the size of the work groups the work is divided into, or it can be left to implementation do decide
+automatically. The kernel is then executed on each work item, which can determine its portion 
+of work by accessing its global or local id. The figure ... shows the overall work structure in OpenCL.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.8\textwidth]{images/opencl.jpg}
+\caption{Work structure in OpenCL \protect\footnotemark}
+\label{fig:opencl}
+\end{figure}
+\footnotetext{\url{https://software.intel.com/sites/landingpage/opencl/optimization-guide/Basic_Concepts.htm}}
+
+\subsection{Kernels}
+
+Kernels are OpenCL programs executed in parallel on a computation device. The language that is
+used to write kernels is based on C99, but adapted to fit the OpenCL device model. It replaces 
+the C standard version library with custom set functions, which contain additional features, such as 
+math functions. When using pointers, programmer can use region qualifiers annotations, such as
+\texttt{\_\_global} or \texttt{\_\_local}, which specify a level in memory hierarchy. Besides standerad
+types like \texttt{float} or \texttt{int}, OpenCL defines vector type with fixed length with size
+of 2, 4, 8 or 16. Operations on these vector types are inteded to map onto vector instructions on the device.
+The entry point functions are marked with \texttt{\_\_kernel} which signals that it can be called by the host code.
+
+The host code is responsible for selecting the device, loading the kernel code and building the 
+program it using the selected device. The program can be than queued, which also involves specifying
+the global work size, and optionaly the local work size.
+
 \subsection{Aparapi}
 TODO: Aparapi background
 \footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/aparapi/}}
@@ -633,8 +721,8 @@ suitable for running experiments.
 Two baseline tests were done. First runs LES as it would be run without any
 parallelisation over network. Second does the same, but adds halo writes and reads
 as well as simple halo exchanges as show in figure \ref{fig:halo_exchange}.
-Another test was done using Spark standalone mode. In this mode all driver 
-program, Spark master and Spark worker work in a single container. Each test was run twice and 
+Another test was done using Spark local mode. In this mode both the driver 
+program and Spark worker work in a single container. Each test was run twice and 
 all tests were run using 100 time steps. The results measured using the \texttt{time} command
 can be seen in table \ref{tab:baseline_times}. Commands used to run these tests can be seen below:
 \begin{verbatim}
@@ -650,7 +738,7 @@ can be seen in table \ref{tab:baseline_times}. Commands used to run these tests 
       \hline
       Single LES & 0m41.216s & 0m40.146s \\
       LES with simple halos & 1m13.313s & 1m14.676s \\
-      Spark standalone & 22m17.929s & 22m34.030s \\
+      Spark local & 22m17.929s & 22m34.030s \\
       \hline
   \end{tabular}
   \captionof{table}{Summary of halo exchanges and reductions for each LES stage in one time step}
@@ -686,8 +774,8 @@ the baseline. Overhead caused by spark seems to be too high when comparing it to
 in the simulation. In addition, a linear increase in run time with increasing number of nodes
 can be observed. This means that as is, the approach taken in this project might not
 be suitable to parallelising LES. However, due to very small number of tests, 
-this is not a conclusive result. The next chapter goes into detail as to what test
-to do to make a proper conclusion.
+this is not a conclusive result. The next chapter goes into detail as to what tests
+should be done in order to make a proper conclusion.
 
 %==============================================================================
 %  Conclusion
