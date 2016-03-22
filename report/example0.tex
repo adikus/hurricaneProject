@@ -42,7 +42,19 @@ frameround=fttt
 \maketitle
 
 \begin{abstract}
-The bestest abstract
+The Large Eddy Simulator is a high resolution meteorological simulator designed to model
+flows over urban topologies. While the simulation has been accelerated with the use of 
+OpenCL technology, there are still limits to the size of the simulation that can be run on a single computer.
+
+This project tries to overcome this limitation by parallelising the simulation on a 
+network cluster using Apache Spark framework. Suitability of multiple approaches to 
+halo exchanges over network is explored and it is demonstrated that such exchange 
+can be done using MapReduce frameworks and Apache Spark specifically. The simulation 
+is rewritten in Java and uses Aparapi for OpenCL acceleration and Java Native Access 
+to access Fortran routines in the original code. A number of simple test was conducted 
+to determine the scalability and viability of this method. However, significantly 
+decreased performance was observed when compared to the non-parallelised implementation 
+due to framework overhead.
 \end{abstract}
 
 \educationalconsent
@@ -62,7 +74,7 @@ The bestest abstract
 Simulating real world weather system is a difficult task, requiring a lot of computational power.
 One such simulator is The Large Eddy Simulator for the Study of Urban Boundary-layer Flows (LES)
 developed by  Hiromasa Nakayama and Haruyasu Nagai at the Japan Atomic Energy Agency
-and Prof. Tetsuya Takemi at the Disaster Prevention Research Institute of Kyoto University\cite{les_analysis}\cite{les}.
+and Prof. Tetsuya Takemi at the Disaster Prevention Research Institute of Kyoto University~\cite{les_analysis}~\cite{les}.
 It simulates meteorological systems in an urban environment with building resolution.
 Originally LES is implemented in Fortran 77 with no explicit parallelization.
 
@@ -70,7 +82,7 @@ Originally LES is implemented in Fortran 77 with no explicit parallelization.
 
 As multi core computational devices are now commonplace, parallelisation has become
 a important consideration when implementing simulations. Therefore LES has been
-ported to Fortran 95/OpenCL implementation by Wim Vanderbauwhed\cite{les_wim}. Using this implementation,
+ported to Fortran 95/OpenCL implementation by Wim Vanderbauwhed~\cite{les_wim}. Using this implementation,
 LES can be run parallelised on any OpenCL compatible computational device, which shows
 significant improvements in speed. While these improvements can reduce the time needed to
 run single simulation run or increase the size of the spatial domain of the simulation,
@@ -129,6 +141,9 @@ in a sequence:
   \hline  
 \end{tabular}
 
+The simulator was originally written in Fortran 77. The current version was ported to Fortran 95
+and accelerated using OpenCL in work by Wim Vanderbauwhed~\cite{les_wim}.
+
 LES runs over spatial domain represent by a 3D grid. Size of 150x150x90 is used for the most
 of this report, but the size can be varied in x and y direction. By increasing the size of the
 grid in x and y directions, LES can be run with higher resolution, or it can used 
@@ -140,7 +155,7 @@ and more importantly there is a limit to how big the grid can be so that it fits
 Using a cluster of computers, we can split the domain such that every node in the cluster runs
 LES on a small portion of the domain. This allows to run LES on much larger domain than what would be
 possible on a single computer. To run LES correctly in this scenario, each node needs access to the 
-edge data belonging to each of its eight neighbours (figure \ref{fig:neighbours}).
+edge data belonging to each of its eight neighbours (figure~\ref{fig:neighbours}).
 
 \begin{figure}
 \centering
@@ -151,7 +166,7 @@ edge data belonging to each of its eight neighbours (figure \ref{fig:neighbours}
 
 Message Passing Interface (MPI) \footnote{\url{http://www.mcs.anl.gov/research/projects/mpi/mpi-standard/mpi-report-2.0/mpi2-report.htm}} 
 is considered to be most commonly used for communication in distributed memory environments.
-Because of this, LES has already been parallelised using MPI by Gordon Reid as his MSci project at University of Glasgow\cite{les_mpi} and others\cite{les_palm}. Although MPI is considered standard and achieves good performance, it
+Because of this, LES has already been parallelised using MPI by Gordon Reid as his MSci project at University of Glasgow~\cite{les_mpi} and others~\cite{les_palm}. Although MPI is considered standard and achieves good performance, it
 isn't easy task to parallelise algorithms using MPI, especially for scientists with minimal
 experience with Computing Science. Therefore it is important to investigate the possibilty
 of using frameworks with higher level abstraction and that are easy to deploy onto a standard
@@ -160,7 +175,7 @@ network cluster.
 \section{MapReduce parallel processing}
 
 MapReduce is a programming model used mainly for processing large quantities of data
-and is intended for network clusters\cite{map_reduce}. Program using this model consists of Map and Reduces
+and is intended for network clusters~\cite{map_reduce}. Program using this model consists of Map and Reduces
 methods which are automatically parallelised. MapReduce was originally name of a technology by
 Google, but is now used for the model in general. MapReduce libraries and frameworks are now 
 available in many programming languages.
@@ -187,9 +202,9 @@ that is the increasing community and high-level abstraction makes this framework
 of this project.  
 
 Every Spark program consists of a driver program and a worker node(s). When Spark is
-used in cluster mode, a cluster manager is also required (figure \ref{fig:spark}). Cluster manager allocates resources
-accross nodes and is usually referred to as Spark master in this report. The driver program
-Once the driver program connects to the cluster, it aquires executors on the worker nodes and
+used in cluster mode, a cluster manager is also required (figure~\ref{fig:spark}). Cluster manager allocates resources
+across nodes and is usually referred to as Spark master in this report. The driver program
+Once the driver program connects to the cluster, it acquires executors on the worker nodes and
 starts sending tasks for them to execute.
 
 The driver program runs the user's main function and allows to run parallel operations on the cluster.
@@ -197,7 +212,7 @@ The main abstraction provided by spark is represented by resilient distributed d
 a collection of elements which is automatically distributed across the cluster that can be operated on
 in parallel.
 
-Listing \ref{lst:spark} shows an example Spark program which loads a textfile and creates a RDD
+Listing~\ref{lst:spark} shows an example Spark program which loads a text file and creates a RDD
 containing words from the file. It then uses \texttt{mapToPair} to create key value pairs, where 
 key is a word a value is count and then produces counts of each word by using \texttt{reduceByKey}.
 
@@ -212,20 +227,20 @@ key is a word a value is count and then produces counts of each word by using \t
 \begin{figure}
   \lstset{caption={Example Spark program},label={lst:spark}}
   \begin{lstlisting}[language=Java]
-  SparkConf conf = new SparkConf().setAppName(appName).setMaster(master);
-  JavaSparkContext sc = new JavaSparkContext(conf);
+SparkConf conf = new SparkConf().setAppName(appName).setMaster(master);
+JavaSparkContext sc = new JavaSparkContext(conf);
 
-  JavaRDD<String> textFile = sc.textFile("...");
-  JavaRDD<String> words = textFile.flatMap(new FlatMapFunction<String, String>() {
-    public Iterable<String> call(String s) { return Arrays.asList(s.split(" ")); }
-  });
-  JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
-    public Tuple2<String, Integer> call(String s) { return new Tuple2<String, Integer>(s, 1); }
-  });
-  JavaPairRDD<String, Integer> counts = pairs.reduceByKey(new Function2<Integer, Integer, Integer>() {
-    public Integer call(Integer a, Integer b) { return a + b; }
-  });
-  counts.saveAsTextFile("...");
+JavaRDD<String> textFile = sc.textFile("...");
+JavaRDD<String> words = textFile.flatMap(new FlatMapFunction<String, String>() {
+  public Iterable<String> call(String s) { return Arrays.asList(s.split(" ")); }
+});
+JavaPairRDD<String, Integer> pairs = words.mapToPair(new PairFunction<String, String, Integer>() {
+  public Tuple2<String, Integer> call(String s) { return new Tuple2<String, Integer>(s, 1); }
+});
+JavaPairRDD<String, Integer> counts = pairs.reduceByKey(new Function2<Integer, Integer, Integer>() {
+  public Integer call(Integer a, Integer b) { return a + b; }
+});
+counts.saveAsTextFile("...");
   \end{lstlisting}
 \end{figure}
 
@@ -234,7 +249,7 @@ key is a word a value is count and then produces counts of each word by using \t
 OpenCL is a framework that allows to writing parallelised software on various computational
 platforms, such as CPUs, GPUs and hardware accelerators. OpenCL uses own programming language
 based on C99 for executing programs called kernels on these platforms. These kernels can be run \
-accross mutiple devices with almost no modification. The differences in code for different devices are 
+across multiple devices with almost no modification. The differences in code for different devices are 
 usually because of different feature set (e.g. double floating point precision support), or
 different performance of specific operations.
 
@@ -242,7 +257,7 @@ different performance of specific operations.
 
 OpenCL\footnote{\url{https://www.khronos.org/opencl/}} architecture consists 
 of a host and a computational device connected to the host.
-The host is usually the CPU and it hadnles the initialisation, allocating memory, queuing work
+The host is usually the CPU and it handles the initialisation, allocating memory, queuing work
 and harvesting of results from the computational device. The computation devices usually has one
 or more compute units and each compute unit consists of multiple processing elements. A single kernel
 execution usually runs on multiple processing elements in parallel.
@@ -271,19 +286,97 @@ Kernels are OpenCL programs executed in parallel on a computation device. The la
 used to write kernels is based on C99, but adapted to fit the OpenCL device model. It replaces 
 the C standard version library with custom set functions, which contain additional features, such as 
 math functions. When using pointers, programmer can use region qualifiers annotations, such as
-\texttt{\_\_global} or \texttt{\_\_local}, which specify a level in memory hierarchy. Besides standerad
+\texttt{\_\_global} or \texttt{\_\_local}, which specify a level in memory hierarchy. Besides standard
 types like \texttt{float} or \texttt{int}, OpenCL defines vector type with fixed length with size
-of 2, 4, 8 or 16. Operations on these vector types are inteded to map onto vector instructions on the device.
+of 2, 4, 8 or 16. Operations on these vector types are intended to map onto vector instructions on the device.
 The entry point functions are marked with \texttt{\_\_kernel} which signals that it can be called by the host code.
 
 The host code is responsible for selecting the device, loading the kernel code and building the 
 program it using the selected device. The program can be than queued, which also involves specifying
-the global work size, and optionaly the local work size.
+the global work size, and optionally the local work size.
 
 \subsection{Aparapi}
-TODO: Aparapi background
-\footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/aparapi/}}
-\footnote{\url{https://aparapi.github.io/}}
+
+Aparapi\footnote{\url{https://aparapi.github.io/}} is an API that allows programmers
+to write OpenCL capable parallel programs in Java. Aparapi was originally an AMD 
+product \footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/aparapi/}},
+but was released to open source in 2011. It is capable of converting Java bytecode
+into OpenCL programs that can be executed on computational devices. Aparapi also 
+provides abstraction for selecting devices and queuing programs. 
+
+Listing~\ref{lst:aparapi} shows an example how Aparapi works. The example creates two 
+vectors, \texttt{a} and \texttt{b} and sums them into vector \texttt{sum}. \texttt{a} and \texttt{b}
+are represented by two arrays, which are initialised with random values. The OpenCL program
+is created by using a \texttt{Kernel} class with overloaded \texttt{run} method and 
+can be enqueued and run using \texttt{execute} method. The underlying OpenCL code that
+is used to create the OpenCL program can be seen in listing~\ref{lst:aparapi_cl}.
+\begin{figure}
+  \lstset{caption={Example Aparapi program that sums two vectors},label={lst:aparapi}}
+  \begin{lstlisting}[language=Java]
+import com.amd.aparapi.Kernel;
+import com.amd.aparapi.Range;
+
+public class VectorAdd 
+{
+    public static void main( String[] args )
+    {
+        final int size = 50000000;
+
+        final float[] a = new float[size];
+        final float[] b = new float[size];
+
+        for (int i = 0; i < size; i++) {
+           a[i] = (float) (Math.random() * 100);
+           b[i] = (float) (Math.random() * 100);
+        }
+
+        final float[] sum = new float[size];
+
+        Kernel kernel = new Kernel(){
+           @Override public void run() {
+              int gid = getGlobalId();
+              sum[gid] = a[gid] + b[gid];
+           }
+        };
+        
+        kernel.execute(Range.create(size));
+    }
+}    
+  \end{lstlisting}
+\end{figure}
+
+\begin{figure}
+  \lstset{caption={OpenCL code generated by the Aparapi example},label={lst:aparapi_cl}}
+  \begin{lstlisting}[language=C]
+typedef struct This_s{
+   __global float *val$sum;
+   __global float *val$a;
+   __global float *val$b;
+   int passid;
+}This;
+int get_pass_id(This *this){
+   return this->passid;
+}
+__kernel void run(
+   __global float *val$sum, 
+   __global float *val$a, 
+   __global float *val$b, 
+   int passid
+){
+   This thisStruct;
+   This* this=&thisStruct;
+   this->val$sum = val$sum;
+   this->val$a = val$a;
+   this->val$b = val$b;
+   this->passid = passid;
+   {
+      int gid = get_global_id(0);
+      this->val$sum[gid]  = this->val$a[gid] + this->val$b[gid];
+      return;
+   }
+}   
+  \end{lstlisting}
+\end{figure}
 
 %==============================================================================
 %  Halo exchanges in Spark
@@ -293,7 +386,7 @@ TODO: Aparapi background
 
 The main challenge of this project is to construct viable halo exchange algorithm, using 
 data manipulation methods provided by Apache Spark. This has not been done before, although
-one work\cite{seismic_spark} has used Spark to solve a stencil problem computation. In stencil
+one work~\cite{seismic_spark} has used Spark to solve a stencil problem computation. In stencil
 problems, the problem is divided into cells, and to compute one cell, information about its
 neighbours are needed. However, only simple method using broadcast variables (covered later in the chapter)
 was used in this work.
@@ -302,7 +395,7 @@ Multiple possible algorithms were considered and their implementation details, a
 and drawbacks are discussed in this chapter.
 
 \section{Game of Life as a proof of concept}
-To test the proposed algorithms, a implementation of Conway's Game of Life was used.
+To test the considered algorithms, a implementation of Conway's Game of Life was used.
 This was because of its simplicity and becasue it resembles the simulator in that
 in needs data from neighbours to be transfered in order to be parallelised in 
 distributed environment.
@@ -331,7 +424,7 @@ create a broadcast variable in the driver program, which is the shipped to worke
 nodes if needed. However the limitation is that only the driver program can create
 broadcast variables (i.e. they cannot be created in the worker code) and therefore
 the workers would need to send their edge data to the driver program, which would
-contruct the appropriate halos and create a broadcast variable(figure \ref{fig:broadcast}).
+contruct the appropriate halos and create a broadcast variable(figure~\ref{fig:broadcast}).
 
 \begin{figure}
 \centering
@@ -347,7 +440,7 @@ to their destination directly. Therefore this approach was deemed unsuitable.
 
 \section{MapReduceByKey}
 
-Another way is to use a combination of map and reduce steps (figure \ref{fig:map_reduce}). To represent the 
+Another way is to use a combination of map and reduce steps (figure~\ref{fig:map_reduce}). To represent the 
 chunks, we use Spark Pair Collection of pairs of key and chunk (\texttt{JavaPairRDD<String, Chunk>}). The key represents
 the coordinates of the chunk.
 
@@ -382,7 +475,7 @@ transferred over network, which is unacceptable for the purposes of this project
 \section{MapGroupByKey}
 
 To resolve one of the issues mentioned above, it is possible to replace the reduce
-step with group step (figure \ref{fig:map_group}). This uses \texttt{groupByKey} to group chunk together with
+step with group step (figure~\ref{fig:map_group}). This uses \texttt{groupByKey} to group chunk together with
 neighbours that share the same key. The grouping function takes the chunk with
 its neighbours and combines them into a single chunk, such that the result is the
 same as after the reduce step in previous section.
@@ -401,14 +494,14 @@ the issue of transferring all chunk over network remains as well.
 
 \section{MapCogroup}
 
-Method described in this section was inspired by chapter 4 in \textit{Learning Spark}\cite{learning_spark}.
+Method described in this section was inspired by chapter 4 in \textit{Learning Spark}~\cite{learning_spark}.
 It uses custom partitioner and two separate collections for chunks and neighbours
 to prevent Spark from moving chunks around the network. It uses combination
 of map and cogroup steps.
 
 The first map operates on the same key value pair collection as above. However,
 now it transforms the collection into separate key value pair collection of neighbours,
-instead of creating one mixed one as was done previously (figure \ref{fig:map_cogroup}).
+instead of creating one mixed one as was done previously (figure~\ref{fig:map_cogroup}).
 
 In second step, the \texttt{cogroup} transformation is very similar to the grouping transformation
 from the MapGroupByKey method, with the difference that in this case it operates on two collections 
@@ -483,7 +576,7 @@ Java Native Access \footnote{\url{https://github.com/java-native-access/jna}}.
 \section{Aparapi for Unconventional Cores}
 
 To write the OpenCL host code Aparapi for Unconventional Cores (Aparapi-ucores)
-\cite{aparapi_ucores}
+~\cite{aparapi_ucores}
 \footnote{\url{https://gitlab.com/mora/aparapi-ucores}}
 is used as an underlying library that facilitates communication
 with the OpenCL kernel. It is a fork of Aparapi library that allows
@@ -584,14 +677,14 @@ only when the \texttt{get} or \texttt{put} Aparapi methods are called.
 
 \section{Halo construction and deconstruction}
 
-Since LES has already been parallelised using MPI\cite{les_mpi}, functionality 
+Since LES has already been parallelised using MPI~\cite{les_mpi}, functionality 
 for reading and writing halos is already implemented inside the OpenCL kernel code.
 This format is a single 1D for each halo and therefore needs to be deconstructed 
 before sending and constructed again after receiving. 
 
 Since the spatial domain in this project is considered to be wrapped such that
 bottom connects to top and left connects to right, this halo construction and 
-deconstruction can be demonstrated on a single node (figure \ref{fig:halo_exchange}).
+deconstruction can be demonstrated on a single node (figure~\ref{fig:halo_exchange}).
 
 \begin{figure}
 \centering
@@ -619,7 +712,7 @@ After each group of halo write, simulation step and halo read the appropriate ha
 should be exchanged over network. In addition some stages do a reduction over 
 the whole domain, which means that a reduction over the nodes needs to be done using Spark.
 
-Table \ref{tab:les_stages} contains the summary of each stage.
+Table~\ref{tab:les_stages} contains the summary of each stage.
 
 \begin{center}
   \begin{tabular}{ | l | l | l | }
@@ -720,11 +813,11 @@ suitable for running experiments.
 
 Two baseline tests were done. First runs LES as it would be run without any
 parallelisation over network. Second does the same, but adds halo writes and reads
-as well as simple halo exchanges as show in figure \ref{fig:halo_exchange}.
+as well as simple halo exchanges as show in figure~\ref{fig:halo_exchange}.
 Another test was done using Spark local mode. In this mode both the driver 
 program and Spark worker work in a single container. Each test was run twice and 
 all tests were run using 100 time steps. The results measured using the \texttt{time} command
-can be seen in table \ref{tab:baseline_times}. Commands used to run these tests can be seen below:
+can be seen in table~\ref{tab:baseline_times}. Commands used to run these tests can be seen below:
 \begin{verbatim}
   path-to-project/LES$ bash scripts/single.sh 100
   path-to-project/LES$ bash scripts/halos.sh 100
@@ -732,13 +825,13 @@ can be seen in table \ref{tab:baseline_times}. Commands used to run these tests 
 \end{verbatim}
 
 \begin{center}
-  \begin{tabular}{ | l | l | l | }
+  \begin{tabular}{ | l | r | r | }
       \hline
-      Test & Run time \#1 & Run time \#2 \\
+      Test & \#1 (s) & \#2 (s) \\
       \hline
-      Single LES & 0m41.216s & 0m40.146s \\
-      LES with simple halos & 1m13.313s & 1m14.676s \\
-      Spark local & 22m17.929s & 22m34.030s \\
+      Single LES & 41.216 & 40.146 \\
+      LES with simple halos & 73.313 & 74.676 \\
+      Spark local & 1337.929 & 1354.030 \\
       \hline
   \end{tabular}
   \captionof{table}{Summary of halo exchanges and reductions for each LES stage in one time step}
@@ -753,8 +846,8 @@ Each node runs computation on a domain of size 150x150x90, which means that the 
 on 8 nodes with configuration 2x4 will have total domain size 300x600x90. Spark master
 and the driver program were run on a cluster node separate from the other nodes.
 Each test was run only once and on 100 time steps. The results measured using the \texttt{time} command
-can be seen in figure \ref{fig:eval}. Commands used to run these tests can be seen below
-(see appendix \ref{chap:running} to find out how to run Spark master and workers):
+can be seen in figure~\ref{fig:eval}. Commands used to run these tests can be seen below
+(see appendix~\ref{chap:running} to find out how to run Spark master and workers):
 \begin{verbatim}
   path-to-project/LES$ bash scripts/spark-submit.sh 100 X Y
 \end{verbatim}
@@ -850,10 +943,14 @@ to determine, whether the limitations discovered in this project can be overcome
 %%%%%%%%%%%%%%%%
 \begin{appendices}
 
-\chapter{File structure}
-
 \chapter{Running the simulation}
 \label{chap:running}
+
+\section{Aparapi-ucores}
+
+\section{Game of life proof of concept}
+
+\section{LES}
 
 The project files that are required to run the parallelised version of LES can be found on GitHub.
 \footnote{\url{https://github.com/adikus/hurricaneProject}}
