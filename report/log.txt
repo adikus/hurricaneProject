@@ -1,0 +1,4 @@
+2016-03-22 14:12:49 WARN  Utils:71 - Your hostname, andrej resolves to a loopback address: 127.0.1.1; using 192.168.1.64 instead (on interface wlan0)
+2016-03-22 14:12:49 WARN  Utils:71 - Set SPARK_LOCAL_IP if you need to bind to another address
+2016-03-22 14:12:49 WARN  NativeCodeLoader:62 - Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+2016-03-22 14:12:56 ERROR Master:57 - RECEIVED SIGNAL 15: SIGTERM

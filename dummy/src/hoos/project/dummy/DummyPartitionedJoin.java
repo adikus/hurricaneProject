@@ -22,7 +22,7 @@ public class DummyPartitionedJoin {
 		
 		final int N = 8;
 		
-		startingChunk.multiply(100);
+		startingChunk.multiply(10);
 		final int width = startingChunk.getWidth();
 		final int height = startingChunk.getHeight();
 
