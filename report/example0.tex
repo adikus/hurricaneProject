@@ -187,8 +187,8 @@ network cluster.
 \section{MapReduce parallel processing}
 
 MapReduce is a programming model used mainly for processing large quantities of data
-and is intended for network clusters~\cite{map_reduce}. Program using this model consists of Map and Reduces
-methods which are automatically parallelised. MapReduce was originally name of a technology by
+and is intended to be used on network clusters~\cite{map_reduce}. Programs using this model consist of Map and Reduces
+methods which are automatically parallelised. MapReduce was originally the name of a technology by
 Google, but is now used for the model in general. MapReduce libraries and frameworks are now 
 available in many programming languages.
 
@@ -207,16 +207,16 @@ joining.
 
 \subsection{Apache Spark}
 
-Apache Spark~\footnote{\url{http://spark.apache.org/}} is one of these frameworks and is available Java, Scala, Python and R. It claims
-to be faster over alternatives such as Apache Hadoop, because it allows MapReduce to run in
-memory as opposed to reading and writing inputs and outputs solely from disk. This, with combination
-that is the increasing community and high-level abstraction makes this framework suitable for the purposes
-of this project.  
+Apache Spark~\footnote{\url{http://spark.apache.org/}} is one of these frameworks and is 
+available in Java, Scala, Python and R. It claims to be faster over alternatives such as 
+Apache Hadoop, because it allows MapReduce to run in memory as opposed to reading and 
+writing inputs and outputs solely from disk. This, with combination of its increasing 
+community and high-level abstraction makes this framework suitable for the purposes of this project.  
 
 Every Spark program consists of a driver program and a worker node(s). When Spark is
 used in cluster mode, a cluster manager is also required (figure~\ref{fig:spark}). Cluster manager allocates resources
-across nodes and is usually referred to as Spark master in this report. The driver program
-Once the driver program connects to the cluster, it acquires executors on the worker nodes and
+across nodes and is usually referred to as Spark master in this report. Once the driver 
+program connects to the cluster, it acquires executors on the worker nodes and
 starts sending tasks for them to execute.
 
 The driver program runs the user's main function and allows to run parallel operations on the cluster.
@@ -258,19 +258,19 @@ counts.saveAsTextFile("...");
 
 \section{OpenCL}
 
-OpenCL~\footnote{\url{https://www.khronos.org/opencl/}} is a framework that allows to writing parallelised software on various computational
-platforms, such as CPUs, GPUs and hardware accelerators. OpenCL uses own programming language
-based on C99 for executing programs called kernels on these platforms. These kernels can be run \
-across multiple devices with almost no modification. The differences in code for different devices are 
-usually because of different feature set (e.g. double floating point precision support), or
+OpenCL~\footnote{\url{https://www.khronos.org/opencl/}} is a framework that allows
+writing parallelised software on various computational platforms, such as CPUs, 
+GPUs and hardware accelerators. OpenCL uses own programming language based on C99 for 
+executing programs called kernels. These kernels can be run across multiple devices 
+with almost no modification. The differences in code are usually caused by different 
+feature sets on different devices (e.g. double floating point precision support), or by
 different performance of specific operations.
 
 \subsection{Structure overview}
 
-OpenCL architecture consists 
-of a host and a computational device connected to the host.
+OpenCL architecture consists of a host and a computational device connected to the host.
 The host is usually the CPU and it handles the initialisation, allocating memory, queuing work
-and harvesting of results from the computational device. The computation devices usually have one
+and harvesting of results from the computational device. The computation device usually has one
 or more compute units and each compute unit consists of multiple processing elements. A single kernel
 execution usually runs on multiple processing elements in parallel.
 
@@ -288,23 +288,23 @@ three dimensions.
 \footnotetext{\url{https://software.intel.com/sites/landingpage/opencl/optimization-guide/Basic_Concepts.htm}}
 
 When executing the kernel, the host code specifies the global work size. The host can specify 
-the size of the work groups the work is divided into, or it can be left to implementation do decide
+the size of the work groups the work is divided into, or it can be left to implementation do be decided
 automatically. The kernel is then executed on each work item, which can determine its portion 
-of work by accessing its global or local id. The figure ... shows the overall work structure in OpenCL.
+of work by accessing its global or local id. The figure~\ref{fig:opencl} shows the overall work structure in OpenCL.
 
 \subsection{Kernels}
 
 Kernels are OpenCL programs executed in parallel on a computation device. The language that is
 used to write kernels is based on C99, but adapted to fit the OpenCL device model. It replaces 
-the C standard version library with custom set functions, which contain additional features, such as 
+the C standard version library with custom set of functions, which contains additional features, such as 
 math functions. When using pointers, programmer can use region qualifiers annotations, such as
 \texttt{\_\_global} or \texttt{\_\_local}, which specify a level in memory hierarchy. Besides standard
-types like \texttt{float} or \texttt{int}, OpenCL defines vector type with fixed length with size
+types like \texttt{float} or \texttt{int}, OpenCL defines vector types with fixed length
 of 2, 4, 8 or 16. Operations on these vector types are intended to map onto vector instructions on the device.
 The entry point functions are marked with \texttt{\_\_kernel} which signals that it can be called by the host code.
 
 The host code is responsible for selecting the device, loading the kernel code and building the 
-program it using the selected device. The program can be than queued, which also involves specifying
+program using the selected device. The program can be than queued, which also involves specifying
 the global work size, and optionally the local work size.
 
 \subsection{Aparapi}
@@ -316,7 +316,7 @@ but was released to open source in 2011. It is capable of converting Java byteco
 into OpenCL programs that can be executed on computational devices. Aparapi also 
 provides abstraction for selecting devices and queuing programs. 
 
-Listing~\ref{lst:aparapi} shows an example how Aparapi works. The example creates two 
+Listing~\ref{lst:aparapi} shows an example Aparapi program. The example creates two 
 vectors, \texttt{a} and \texttt{b} and sums them into vector \texttt{sum}. \texttt{a} and \texttt{b}
 are represented by two arrays, which are initialised with random values. The OpenCL program
 is created by using a \texttt{Kernel} class with overloaded \texttt{run} method and 
@@ -394,7 +394,7 @@ __kernel void run(
 
 Parallelised version of LES has been created by Gordon Reid~\cite{les_mpi} using MPI
 and Glasgow Model Coupling Framework (GMFC). The work creates MPI implementation for both shared-
-and distributed-memory systems. GMFC implementation is created for shared-memory system.
+and distributed-memory systems. GMFC implementation is created for shared-memory systems.
 The implementation is evaluated using constant global area as well as using expanding area
 test with each node having area of the same size. Both MPI and GMCF have been shown
 to scale well using both evaluation methods.
@@ -426,7 +426,7 @@ considered and their implementation details, advantages and drawbacks are discus
 \section{Game of Life as a proof of concept}
 To test the considered algorithms, a implementation of Conway's Game of Life was used.
 This was because of its simplicity and becasue it resembles the simulator in that
-in needs data from neighbours to be transfered in order to be parallelised in 
+in needs boundary data to be transfered in order to be parallelised in 
 distributed environment.
 
 The Game of Life is a cellular automaton and is run on a 2D grid of cells. To compute
@@ -441,16 +441,16 @@ The transitions are defined as:
 \end{itemize}
 
 We can group the cells into same size rectangle shaped chunks and compute the transitions of each
-chunk on a separate node of the cluster. However, now the nearest edges of neighbouring
-chunks need to be exchanged before each transition, in order for the edge cells to know
-the state of all of their neighbours. This is the same case in the LES and is therefore
+chunk on a separate node of the cluster. The nearest edges of neighbouring
+chunks need to be exchanged before each transition in order for the edge cells to know
+the state of all of their neighbours. This is the similar case as in LES and is therefore
 suitable as a proof of concept.
 
 \section{Broadcast variables}
 \label{chap:broadcast}
 
-The simplest way exchange halos is using broadcast variables. Spark allows to
-create a broadcast variable in the driver program, which is the shipped to worker
+The simplest way to exchange halos is using broadcast variables. Spark allows to
+create a broadcast variable in the driver program, which can be then shipped to worker
 nodes if needed. However the limitation is that only the driver program can create
 broadcast variables (i.e. they cannot be created in the worker code) and therefore
 the workers would need to send their edge data to the driver program, which would
@@ -471,8 +471,8 @@ to their destination directly. Therefore this approach was deemed unsuitable.
 \section{MapReduceByKey}
 
 Another way is to use a combination of map and reduce steps (figure~\ref{fig:map_reduce}). To represent the 
-chunks, we use Spark Pair Collection of pairs of key and chunk (\texttt{JavaPairRDD<String, Chunk>}). The key represents
-the coordinates of the chunk.
+chunks, we use Spark Pair Collection of key-value pairs of key and chunk (\texttt{JavaPairRDD<String, Chunk>}).
+The key represents the coordinates of the chunk.
 
 \begin{figure}
 \centering
@@ -492,7 +492,7 @@ with the neighbour added to it, which results in a collection of chunks which ar
 larger by one cell on each side.
 
 The last step is a map step, which computes next transition on each chunk, returning
-collection of transformed chunk which are the original size.
+collection of transformed chunks which are the original size.
 
 There are, however, some drawbacks to this approach. The first is, that we cannot
 control the exact order in which these operations are executed. For example, Spark
@@ -512,7 +512,7 @@ same as after the reduce step in previous section.
 
 Using this method the issue of the order of execution is solved, since the group
 can be executed only after all of first map stage has been executed. The second issue
-of not being able to control where is each stage executed still remains and therefore
+of not being able to control where each stage is executed still remains and therefore
 the issue of transferring all chunk over network remains as well.
 
 \begin{figure}
@@ -529,8 +529,8 @@ It uses custom partitioner and two separate collections for chunks and neighbour
 to prevent Spark from moving chunks around the network. It uses combination
 of map and cogroup steps.
 
-The first map operates on the same key value pair collection as above. However,
-now it transforms the collection into separate key value pair collection of neighbours,
+The first map operates on the same key-value pair collection as above. However,
+now it transforms the collection into separate key-value pair collection of neighbours,
 instead of creating one mixed one as was done previously (figure~\ref{fig:map_cogroup}).
 
 In second step, the \texttt{cogroup} transformation is very similar to the grouping transformation
@@ -557,13 +557,14 @@ on a collection are saved in its lineage are executed only after a call
 that materialises the collection on the driver program is called on it. Examples of such calls are
 \texttt{count} that returns the number of items in the collection, \texttt{collect}
 which returns array of all items in the collection or \texttt{reduce}, which, as opposed
-to \texttt{reduceByKey} reduces the collection into single item.
+to \texttt{reduceByKey} reduces the collection into single item. The lineage can
+be imagined as a tree that contains child and parent relationships between tasks.
 
 This introduces some issues. First issue is that often, when resolving stages that
 do network shuffle, Spark executes the parent stages more than once. This is
 considered standard Spark behaviour and is solved by caching the parent collection
 using \texttt{cache} method, which also marks the collection to be explicitly reused
-when executing, child stages. However, it was found that Spark keeps more cached collections
+when executing child stages. However, it was found that Spark keeps more cached collections
 than necessary, and therefore workaround was devised. Using this workaround, first,
 new collection is created, then cached and materialised using \texttt{count} and 
 then \texttt{unpersist} is called on the old collection to remove it from the cache.
@@ -582,10 +583,10 @@ its lineage.
 \chapter{LES in Java}
 \label{chap:les_java}
 
-The second challenge this chapter deals with is reimplementing LES in Java.
-To do this, the OpenCL host code written in Fortran needs to be rewritten 
-Java. This code consists mainly of a \texttt{switch} construct, which executes
-different routines in the OpenCL kernel. Next methods for initialising variables,
+This chapter deals with the second challenge, which is reimplementing LES in Java.
+To do this, the OpenCL host code written in Fortran needs to be rewritten in
+Java. The host code consists mainly of a \texttt{switch} construct, which executes
+different routines in the OpenCL kernel in a loop. Next, methods for initialising variables,
 constructing and deconstructing halos need to be created. Finally, the newly 
 written Java OpenCL host code needs to be integrated with Spark.
 
@@ -593,36 +594,36 @@ written Java OpenCL host code needs to be integrated with Spark.
 
 LES works with about 40 different variables that store states of different systems,
 wind velocity, pressure, halos and grid constants. These variables need to be initialised
-before the execution of the simulation. This process is covered in a substantial part of
-the Fortran source code.
+before the execution of the simulation and then passed to the kernel. This process is 
+covered in a substantial part of the Fortran source code.
 
 Since accessing the existing Fortran subroutines is a viable strategy
 ~\footnote{\url{http://www.javaforge.com/wiki/66061}},
 it was decided to write a simple Fortran subroutine, which groups 
 all subroutines that initialise the needed variables. The Fortran code
-is compiled into a shared library, and can be accessed from Java using
+is then compiled into a shared library, and can be accessed from Java using
 Java Native Access~\footnote{\url{https://github.com/java-native-access/jna}}.
 
 \section{Aparapi for Unconventional Cores}
 
-To write the OpenCL host code Aparapi for Unconventional Cores (Aparapi-ucores)
+To write the OpenCL host code, Aparapi for Unconventional Cores (Aparapi-ucores)
 ~\cite{aparapi_ucores}
 ~\footnote{\url{https://gitlab.com/mora/aparapi-ucores}}
 is used as an underlying library that facilitates communication
 with the OpenCL kernel. It is a fork of Aparapi library that allows
-running OpenCL code on unconventional cores such as FPGAs. In addition
+running OpenCL code on unconventional cores such as FPGAs. In addition,
 it allows running OpenCL kernels from precompiled binaries.
 
 Aparapi allows to write Java code which is then translated into OpenCL kernel code
-and executed. However, since the LES kernel code is already written, this is 
-counterproductive. It is impossible to disable this behaviour and therefore a 
-workaround is necessary. Although, with binary flow, which is provided by Aparapi-ucores
-it is possible to execute compiled binary of the provided kernel instead of 
-kernel generated by Aparapi, Aparapi will expect the same method signature as 
-the one the generated kernel has. Therefore it is needed to provide Aparapi with
+and executed. However, since LES kernel code is already written, this is 
+unnecessary. It is impossible to disable this behaviour and therefore a 
+workaround is necessary. Although, with binary flow, which is provided by Aparapi-ucores,
+it is possible to execute compiled binary of the provided kernels instead of 
+the kernels generated by Aparapi, Aparapi will still expect the same method signature as 
+the one generated by Aparapi. Therefore it is needed to provide Aparapi with
 dummy Java code, that translates into correct OpenCL method signature.
-This can be achieved by using all parameters in correct order, the parameters
-need to have correct datatype and parameters that are supposed to be written to
+This can be achieved by using all parameters in correct order and the parameters
+need to have correct datatype. Also, parameters that are supposed to be written to
 by kernel need to be marked as such by assigning a value into them. Example dummy
 code is in the listing below:
 
@@ -653,11 +654,11 @@ In the example above, four kernel parameters are used. All are arrays of floats.
 Note that the order in which they are listed in the sum in the first line of the 
 \texttt{run} method, is the same as the order of the parameters in the signature.
 In addition the \texttt{uvw} and \texttt{uvwsum} variables were assigned into,
-which marks them as kernel-writable inside Aparapi. Also, important to note,
+which marks them as kernel-writable inside Aparapi. Also important to note,
 is final parameter \texttt{passid}, which is being automatically inserted by Aparapi,
 and contains the id of the current kernel execution.
 
-Due to the nature, there are some modification that need to be done to the OpenCL
+Due to this, there are some modification that need to be done to the OpenCL
 kernel, before compiling into a binary. First, the \texttt{passid} needs to be added to
 the parameter list. Second, Aparapi does not support passing non-constant scalar fields
 into the kernel as parameter. As a workaround to this, scalar fields can be represented
@@ -689,32 +690,34 @@ compile the kernel file.
 
 Aparapi-ucores contains functionality which copies the contents of the parameters
 into a memory aligned location. This is done because some devices such as FPGAs
-do not interact well with unaligned memory locations, and locations in JVM heap
+do not interact well with unaligned memory locations and locations in JVM heap
 might not be aligned. This functionality is currently experimental, and allocates 
-new memory for every kernel-writable parameter every kernel execution. In addition
+new memory for every kernel-writable parameter every kernel execution. In addition to this,
 it copies the content of parameters from the original JVM memory location to this new 
 location and back every kernel execution for every parameter. This results in a significant 
 slowdown in execution, which is undesirable.
 
-This functionality can be turned of, since in theory, using unaligned parameters
+This functionality can be turned off, since in theory, using unaligned parameters
 should not pose any issues when running the kernel on CPUs and GPUs. However,
-after switching this functionality it was found, that the kernel no longer runs
-properly on Intel CPU. The reason remains, as of writing of this report, unknown,
-and therefore it was decided to modify the underlying Aparapi-ucores C++ source code
+after switching this functionality off, it was found that the kernel no longer runs
+properly on Intel CPUs. The reason remains, as of writing of this report, unknown.
+Because of this, it was decided to modify the underlying Aparapi-ucores C++ source code
 to create a workaround that deals with the excessive memory copies. The workaround
 allocates the aligned memory location only once and copies the memory from or to it
-only when the \texttt{get} or \texttt{put} Aparapi methods are called.
+only when the \texttt{get} or \texttt{put} Aparapi methods are called, and therefore
+works only with the explicit Aparapi mode, which is used in this project.
 
 \section{Halo construction and deconstruction}
 
 Since LES has already been parallelised using MPI~\cite{les_mpi}, functionality 
 for reading and writing halos is already implemented inside the OpenCL kernel code.
-This format is a single 1D for each halo and therefore needs to be deconstructed 
-before sending and constructed again after receiving. 
+The format used by the implementation is a single 1D array for each halo and 
+therefore needs to be deconstructed into eight different neighbours before sending and 
+again constructed from neighbour arrays into single array again after receiving.
 
 Since the spatial domain in this project is considered to be wrapped such that
 bottom connects to top and left connects to right, this halo construction and 
-deconstruction can be demonstrated on a single node (figure~\ref{fig:halo_exchange}).
+deconstruction can be demonstrated and tested on a single node (figure~\ref{fig:halo_exchange}).
 
 \begin{figure}
 \centering
@@ -726,11 +729,11 @@ deconstruction can be demonstrated on a single node (figure~\ref{fig:halo_exchan
 \section{LES in Apache Spark}
 
 As a final part of the project implementation, working LES Aparapi implementation
-needs to be integrated into Spark. MapCogroup described in \autoref{chap:halos}
+needs to be integrated into Spark. MapCogroup approach described in \autoref{chap:halos}
 is used as the halo exchange algorithm.
 
 Each time step of the simulation is divided into 11 steps, with each step executing
-OpenCL kernel once. The 8th step (\texttt{PRESS\_SOR}) is a exception. 
+OpenCL kernel once. The 8th step (\texttt{PRESS\_SOR}) is an exception. 
 In this step the successive over relaxation is run, which requres multiple 
 iterations of kernel executions. Normally the over relaxation is run until 
 the simulation state converges, but in this project it was decided to use constant
@@ -739,7 +742,7 @@ number of 50 iterations.
 Each kernel execution needs to be accompanied be a halo write beforehand 
 and halo read afterwards, both of which are an extra kernel execution.
 After each group of halo write, simulation step and halo read the appropriate halos
-should be exchanged over network. In addition some stages do a reduction over 
+should be exchanged over network. In addition some simulation steps do a reduction over 
 the whole domain, which means that a reduction over the nodes needs to be done using Spark.
 
 Table~\ref{tab:les_stages} contains the summary of each stage.
@@ -772,18 +775,18 @@ Table~\ref{tab:les_stages} contains the summary of each stage.
   \label{tab:les_stages}
 \end{center}
 
-Spark collection that contains the kernel hosts consists of key value pairs.
+Spark collection that holds the kernel hosts on each node consists of key value pairs.
 The key is represented by an integer which has value between 0 and X*Y-1, where X and Y
 are the size of the node grid. For example, if X is 2 and Y is 3, it means we intend to
-run the simulation on cluster with 6 worker nodes, and each node is running a simulation
+run the simulation on cluster with 6 worker nodes and each node is running a simulation
 on a 150x150x90 size domain. The value in the key value pair is represented by a subclass
 of Aparapi Kernel class.
 
 The neighbours are represent by a Neighbour class which encapsulates the underlying data
 array and the direction from which it came (N,S,W,E,NW,NE,SW,SE).
 
-Finally, helper methods have been created for executing stage of simulation, exchanging halos
-and reductions. This means that a execution of a single simulation stage can be written similarly to:
+Finally, helper methods have been created for executing steps of simulation, exchanging halos
+and reductions. This means that a execution of a single simulation step can be written similarly to:
 
 \begin{lstlisting}
 // 7th stage - PRESS_RHSAV
@@ -804,12 +807,12 @@ should not take longer than couple of seconds, this means that large quantity
 of data is serialised to disk over the run of program.
 
 This can create problems when trying to execute the simulation in environment
-with restricted disk space. Therefore another workaround was devised, which 
+with restricted disk space. Therefore another workaround was devised, which deletes
 all previous checkpoints before creating a new one. Checkpoints in Spark are used
 to recover from a crash of a node or a similar scenario. However in our case,
 recovering is not as simple as deserialising a class from disk. Further work
-would need to be made to initialise the OpenCL kernel and load the recovered state 
-of parameters into it, and was deemed to be out of the scope of this project.
+would have to be done to initialise the OpenCL kernel and load the recovered  
+parameters into it. This was deemed to be out of the scope of this project.
 Therefore the checkpoints are completely useless and can be deleted without worry.
 
 %==============================================================================
@@ -845,9 +848,9 @@ Two baseline tests were done. First runs LES as it would be run without any
 parallelisation over network. Second does the same, but adds halo writes and reads
 as well as simple halo exchanges as show in figure~\ref{fig:halo_exchange}.
 Another test was done using Spark local mode. In this mode both the driver 
-program and Spark worker work in a single container. Each test was run twice and 
-all tests were run using 100 time steps. The results measured using the \texttt{time} command
-can be seen in table~\ref{tab:baseline_times}. Commands used to run these tests can be seen below:
+program and Spark worker run in a single JVM container. Each test was run twice and 
+all tests were run using 100 time steps. The results were measured using the \texttt{time} command
+and can be seen in table~\ref{tab:baseline_times}. Commands used to run these tests can be seen below:
 \begin{verbatim}
   path-to-project/LES$ bash scripts/single.sh 100
   path-to-project/LES$ bash scripts/halos.sh 100
@@ -864,19 +867,19 @@ can be seen in table~\ref{tab:baseline_times}. Commands used to run these tests 
       Spark local & 1337.929 & 1354.030 \\
       \hline
   \end{tabular}
-  \captionof{table}{Summary of halo exchanges and reductions for each LES stage in one time step}
+  \captionof{table}{Execution times of baseline tests}
   \label{tab:baseline_times}
 \end{center}
 
 \section{Spark tests - increasing domain size}
 
-The final tests done using spark were done on varying number of nodes.
+The final tests done using spark were done on varying number of nodes with expanding domain.
 The aim is to increase the total domain size by increasing the number of nodes.
 Each node runs computation on a domain of size 150x150x90, which means that the simulation
 on 8 nodes with configuration 2x4 will have total domain size 300x600x90. Spark master
 and the driver program were run on a cluster node separate from the other nodes.
-Each test was run only once and on 100 time steps. The results measured using the \texttt{time} command
-can be seen in figure~\ref{fig:eval}. Commands used to run these tests can be seen below
+Each test was run only once and with 100 time steps. The results are measured using the \texttt{time} command
+and can be seen in figure~\ref{fig:eval}. Commands used to run these tests can be seen below
 (see appendix~\ref{chap:running} to find out how to run Spark master and workers):
 \begin{verbatim}
   path-to-project/LES$ bash scripts/spark-submit.sh 100 X Y
@@ -886,19 +889,19 @@ where X and Y are the sizes of the node grid.
 \begin{figure}
 \centering
 \includegraphics[width=1\textwidth]{images/evaluation.png}
-\caption{Bar chart with runtimes of the 100 steps of simulation for various node configurations}
+\caption{Bar chart with runtimes of the 100 time steps of simulation for various node configurations}
 \label{fig:eval}
 \end{figure}
 
 \section{Discussion}
 
-The tests report about 20x slowdown of the run simulation run with Spark compared to
-the baseline. Overhead caused by spark seems to be too high when comparing it to time spent 
-in the simulation. In addition, a linear increase in run time with increasing number of nodes
+The tests report about 20x slowdown of the simulation run time with Spark compared to
+the baseline tests. Ratio of overhead caused by spark to time spent in the simulation
+seems to be too high. In addition, a linear increase in run time with increasing number of nodes
 can be observed. This means that as is, the approach taken in this project might not
 be suitable to parallelising LES. However, due to very small number of tests, 
 this is not a conclusive result. The next chapter goes into detail as to what tests
-should be done in order to make a proper conclusion.
+should be done next, in order to make a proper conclusion.
 
 %==============================================================================
 %  Conclusion
@@ -916,24 +919,25 @@ to determine whether using this approach to parallelisation of LES is usable.
 \subsection{Spark overhead}
 
 The biggest issue that is causing the adverse performance seems to be overhead
-caused by Spark. While single kernel execution, together with one halo write and
-one halo read takes the order of tens of milliseconds, the time it takes Spark
+caused by Spark. While single kernel execution together with one halo write and
+one halo read takes only tens of milliseconds, the time it takes Spark
 to run the task and exchange the halos seems to be much higher. Spark reports
-task time to be be less than half of the overall execution time, which means
-that most time is spent scheduling task, resolving lineage and network transfers.
+that time spent executing tasks is less than half of the overall execution time, which means
+that most time is spent scheduling tasks and resolving lineage.
 
 One possible explanation of the high overhead might be the need to recompute the
-lineage after each network shuffle, since Spark cannot predict where each item
-in the collection will end up after the shuffle. The fact that shuffle is necessary
+lineage after each network shuffle. Since Spark cannot predict where each item
+in the collection will end up after the shuffle, it might need to recompute the 
+lineage after every shuffle. The fact that shuffle is necessary
 in each halo exchange, and that these are done more than 100 time per steps could
 potentially mean high frequency of Spark recalculating the lineage.
 
 One approach to decrease the overhead could be to try different versions of Spark.
 Evaluation in this project was done using version 1.4.1, however since Spark 
-seems to be rapidly moving project, there are already newer versions (1.5, 1.6), which could have 
-better performance.
+seems to be rapidly moving project, there are already newer versions (1.5, 1.6), 
+which could have improved performance.
 
-Another approach is to increase kernel execution. This could be done by increasing
+Another approach is to increase kernel execution time. This could be done by increasing
 domain size per node. This would be decrease the ratio of Spark overhead time to 
 execution time, which would decrease the overall slowdown from 15-20x to 
 something more manageable. The cluster on which the evaluation was done, has 64GB
@@ -954,7 +958,7 @@ the source code, since Spark is an open source project.
 
 \subsection{Evaluation on massively parallel cluster}
 
-The evaluation done in this project was done on eight nodes as the largest test.
+The largest test during evaluation done in this project was done on eight nodes.
 While the results show almost linear increase in computational time with
 increasing number of nodes, it cannot be assumed that this trend continues.
 Therefore it is important to test the simulation on cluster with tens, hundreds,
@@ -968,7 +972,7 @@ The approach proposed in \autoref{chap:broadcast} was initially dismissed due to
 unnecessary network transfers. However, since it was found that the bottleneck 
 is caused by Spark overhead and not the network transfers, this approach
 might prove to be surprisingly effective. This approach consists essentially only 
-of two map steps, and thus no steps do network shuffle, which should make Spark
+of two map steps, and thus no network shuffle is needed, which should make Spark
 evaluate the lineage much more efficiently. However, since this approach needs
 to transfer all the neighbour data to the driver program, this approach might
 not be usable when running the simulation on a massively parallel cluster (e.g. 1000s of nodes).
