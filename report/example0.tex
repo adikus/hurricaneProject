@@ -50,7 +50,7 @@ This project tries to overcome this limitation by parallelising the simulation o
 network cluster using Apache Spark framework. Suitability of multiple approaches to 
 halo exchanges over network is explored and it is demonstrated that such exchange 
 can be done using MapReduce frameworks and Apache Spark specifically. The simulation 
-is rewritten in Java and uses Aparapi for OpenCL acceleration and Java Native Access 
+is rewritten from Fortran to Java and uses Aparapi for OpenCL acceleration and Java Native Access 
 to access Fortran routines in the original code. A number of simple test was conducted 
 to determine the scalability and viability of this method. However, significantly 
 decreased performance was observed when compared to the non-parallelised implementation 
@@ -87,7 +87,7 @@ One such simulator is The Large Eddy Simulator for the Study of Urban Boundary-l
 developed by  Hiromasa Nakayama and Haruyasu Nagai at the Japan Atomic Energy Agency
 and Prof. Tetsuya Takemi at the Disaster Prevention Research Institute of Kyoto University~\cite{les_analysis}~\cite{les}.
 It simulates meteorological systems in an urban environment with building resolution.
-Originally LES is implemented in Fortran 77 with no explicit parallelization.
+Originally, LES is implemented in Fortran 77 with no explicit parallelization.
 
 \section{Motivation \& Aim}
 
@@ -95,14 +95,14 @@ As multi core computational devices are now commonplace, parallelisation has bec
 a important consideration when implementing simulations. Therefore LES has been
 ported to Fortran 95/OpenCL implementation by Wim Vanderbauwhed~\cite{les_wim}. Using this implementation,
 LES can be run parallelised on any OpenCL compatible computational device, which shows
-significant improvements in speed. While these improvements can reduce the time needed to
-run single simulation run or increase the size of the spatial domain of the simulation,
+significant improvements in speed. While these improvements can be used to reduce the time needed to
+run single simulation run or to increase the size of the spatial domain of the simulation,
 there are limits to both. One of these limits is number of computational units the device has,
 limiting the extent of parallelization. The other is memory available on the device.
 
 Using a network cluster of computers can, in theory, help overcome these limits to some extent.
 However, splitting work onto multiple nodes in a cluster introduces a issue of communicating
-important information over network. Specifically, in case of LES, data that is at the edge of
+important information over network. Specifically, in case of LES, data that is at the boundary of
 the spatial domain of each node needs to be exchanged in so called halo exchanges.
 
 Recently, there has been a rise in a new computational frameworks focused on working in
@@ -115,7 +115,7 @@ LES, or any algorithm relying on halo exchanges in network distributed environme
 \section{Outline}
 
 Further background will be described in \autoref{chap:background}, including information
-on LES, Apache Spark and OpenCL implementation used. Implementation of halo exchanges in 
+on LES, Apache Spark, OpenCL and related work. Implementation of halo exchanges in 
 Apache Spark will be discussed in \autoref{chap:halos} and \autoref{chap:les_java} will
 explain the process of porting LES code from Fortran to Java. Evaluation of the achieved
 performance can be found in \autoref{chap:eval} and \autoref{chap:conclusion} contains
@@ -133,7 +133,7 @@ The Large Eddy Simulator for the Study of Urban Boundary-layer Flows developed b
 Disaster Prevention Research Institute of Kyoto University is a high resolution
 meteorological simulator designed to model turbulent flows over urban topologies. 
 It achieves this by using mesoscale meteorological simulations and building resolving
-large-eddy simulations. It also uses The Weather Research and Forecasting Model \footnote{\url{http://www.wrf-model.org}}
+large-eddy simulations. It also uses The Weather Research and Forecasting Model~\footnote{\url{http://www.wrf-model.org}}
 to compute the wind profile as an input for the simulation. The simulation is split into
 multiple subroutines, however, the most important one is the Poisson Equation solver.
 This is the most computationally intensive subroutine and it uses successive over relaxation to solve
@@ -166,7 +166,7 @@ and more importantly there is a limit to how big the grid can be so that it fits
 Using a cluster of computers, we can split the domain such that every node in the cluster runs
 LES on a small portion of the domain. This allows to run LES on much larger domain than what would be
 possible on a single computer. To run LES correctly in this scenario, each node needs access to the 
-edge data belonging to each of its eight neighbours (figure~\ref{fig:neighbours}).
+boundary data belonging to each of its eight neighbours (figure~\ref{fig:neighbours}).
 
 \begin{figure}
 \centering
@@ -175,12 +175,13 @@ edge data belonging to each of its eight neighbours (figure~\ref{fig:neighbours}
 \label{fig:neighbours}
 \end{figure}
 
-Message Passing Interface (MPI) \footnote{\url{http://www.mcs.anl.gov/research/projects/mpi/mpi-standard/mpi-report-2.0/mpi2-report.htm}} 
+Message Passing Interface (MPI)
+~\footnote{\url{http://www.mcs.anl.gov/research/projects/mpi/mpi-standard/mpi-report-2.0/mpi2-report.htm}} 
 is considered to be most commonly used for communication in distributed memory environments.
 Because of this, LES has already been parallelised using MPI by Gordon Reid as his MSci project at University of Glasgow~\cite{les_mpi} and others~\cite{les_palm}. Although MPI is considered standard and achieves good performance, it
-isn't easy task to parallelise algorithms using MPI, especially for scientists with minimal
-experience with Computing Science. Therefore it is important to investigate the possibilty
-of using frameworks with higher level abstraction and that are easy to deploy onto a standard
+is not an easy task to parallelise algorithms using MPI, especially for scientists with minimal
+experience with Computing Science. Therefore, it is important to investigate the possibilty
+of using frameworks with higher level abstraction and that are easy to deploy on a standard
 network cluster.
 
 \section{MapReduce parallel processing}
@@ -206,7 +207,7 @@ joining.
 
 \subsection{Apache Spark}
 
-Apache Spark\footnote{\url{http://spark.apache.org/}} is one of these frameworks and is available Java, Scala, Python and R. It claims
+Apache Spark~\footnote{\url{http://spark.apache.org/}} is one of these frameworks and is available Java, Scala, Python and R. It claims
 to be faster over alternatives such as Apache Hadoop, because it allows MapReduce to run in
 memory as opposed to reading and writing inputs and outputs solely from disk. This, with combination
 that is the increasing community and high-level abstraction makes this framework suitable for the purposes
@@ -230,7 +231,7 @@ key is a word a value is count and then produces counts of each word by using \t
 \begin{figure}
 \centering
 \includegraphics[width=0.7\textwidth]{images/spark.png}
-\caption{Apache Spark cluster components overview \protect\footnotemark}
+\caption{Apache Spark cluster components overview ~\protect\footnotemark}
 \label{fig:spark}
 \end{figure}
 \footnotetext{\url{http://spark.apache.org/docs/1.4.1/cluster-overview.html}}
@@ -257,7 +258,7 @@ counts.saveAsTextFile("...");
 
 \section{OpenCL}
 
-OpenCL\footnote{\url{https://www.khronos.org/opencl/}} is a framework that allows to writing parallelised software on various computational
+OpenCL~\footnote{\url{https://www.khronos.org/opencl/}} is a framework that allows to writing parallelised software on various computational
 platforms, such as CPUs, GPUs and hardware accelerators. OpenCL uses own programming language
 based on C99 for executing programs called kernels on these platforms. These kernels can be run \
 across multiple devices with almost no modification. The differences in code for different devices are 
@@ -281,7 +282,7 @@ three dimensions.
 \begin{figure}
 \centering
 \includegraphics[width=0.8\textwidth]{images/opencl.jpg}
-\caption{Work structure in OpenCL \protect\footnotemark}
+\caption{Work structure in OpenCL ~\protect\footnotemark}
 \label{fig:opencl}
 \end{figure}
 \footnotetext{\url{https://software.intel.com/sites/landingpage/opencl/optimization-guide/Basic_Concepts.htm}}
@@ -308,9 +309,9 @@ the global work size, and optionally the local work size.
 
 \subsection{Aparapi}
 
-Aparapi\footnote{\url{https://aparapi.github.io/}} is an API that allows programmers
+Aparapi~\footnote{\url{https://aparapi.github.io/}} is an API that allows programmers
 to write OpenCL capable parallel programs in Java. Aparapi was originally an AMD 
-product \footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/aparapi/}},
+product~\footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/aparapi/}},
 but was released to open source in 2011. It is capable of converting Java bytecode
 into OpenCL programs that can be executed on computational devices. Aparapi also 
 provides abstraction for selecting devices and queuing programs. 
@@ -596,17 +597,17 @@ before the execution of the simulation. This process is covered in a substantial
 the Fortran source code.
 
 Since accessing the existing Fortran subroutines is a viable strategy
-\footnote{\url{http://www.javaforge.com/wiki/66061}},
+~\footnote{\url{http://www.javaforge.com/wiki/66061}},
 it was decided to write a simple Fortran subroutine, which groups 
 all subroutines that initialise the needed variables. The Fortran code
 is compiled into a shared library, and can be accessed from Java using
-Java Native Access \footnote{\url{https://github.com/java-native-access/jna}}.
+Java Native Access~\footnote{\url{https://github.com/java-native-access/jna}}.
 
 \section{Aparapi for Unconventional Cores}
 
 To write the OpenCL host code Aparapi for Unconventional Cores (Aparapi-ucores)
 ~\cite{aparapi_ucores}
-\footnote{\url{https://gitlab.com/mora/aparapi-ucores}}
+~\footnote{\url{https://gitlab.com/mora/aparapi-ucores}}
 is used as an underlying library that facilitates communication
 with the OpenCL kernel. It is a fork of Aparapi library that allows
 running OpenCL code on unconventional cores such as FPGAs. In addition
@@ -678,9 +679,9 @@ compiled binaries, which are device specific. This means that new binaries need 
 be created whenever the simulation is to be run on a new device. There is no
 tool available that allows easily compile kernel into binaries, but OpenCL specification
 describes a method that allows to retrieve the compiled binary code
-\footnote{\url{https://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clGetProgramInfo.html}}.
+~\footnote{\url{https://www.khronos.org/registry/cl/sdk/1.0/docs/man/xhtml/clGetProgramInfo.html}}.
 Therefore it was decide to create a simple compilation tool 
-\footnote{\url{https://github.com/adikus/cl-compile}}
+~\footnote{\url{https://github.com/adikus/cl-compile}}
 which allows the user to specify a \texttt{.cl} kernel file and device with which to
 compile the kernel file.
 
@@ -832,9 +833,9 @@ In addition, all tests would be run multiple times.
 \section{Architecture}
 
 All tests were done on GPG cluster of CS department at University of Glasgow
-\footnote{\url{http://www.dcs.gla.ac.uk/research/gpg/cluster.htm}}.
+~\footnote{\url{http://www.dcs.gla.ac.uk/research/gpg/cluster.htm}}.
 The cluster consists of 20 nodes, each having 64GB of RAM and 2 Intel Xeon processors
-\footnote{\url{http://ark.intel.com/products/75267/Intel-Xeon-Processor-E5-2640-v2-20M-Cache-2_00-GHz}}.
+~\footnote{\url{http://ark.intel.com/products/75267/Intel-Xeon-Processor-E5-2640-v2-20M-Cache-2_00-GHz}}.
 Three nodes of the cluster are available to public and therefore only the rest 17 are
 suitable for running experiments.
 
@@ -1001,7 +1002,7 @@ and the parallelised simulation code in \texttt{/LES}.
 
 \begin{itemize}
 \item Install OpenCL drivers for your system. (AMD APP SDK
-\footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/}} 
+~\footnote{\url{http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/}} 
 used in project)
 \item Make sure environmental variable \texttt{LD\_LIBRARY\_PATH} contains path to OpenCL libraries
 \item Build Aparapi using \texttt{ant build} in \texttt{src/aparapi}. Configuration in \\
@@ -1011,7 +1012,7 @@ used in project)
 \section{Running Game of life proof of concept (\texttt{/dummy})}
 
 \begin{itemize}
-\item Download Apache Spark\footnote{\url{http://spark.apache.org/}} (project tested with version 1.4.1)
+\item Download Apache Spark~\footnote{\url{http://spark.apache.org/}} (project tested with version 1.4.1)
 \item Build project using \texttt{mvn package}
 \item To run the cogroup version:
 \begin{verbatim}
