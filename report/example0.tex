@@ -267,11 +267,6 @@ collection of related work items, which execute the same kernel and share local 
 The size of the work group is limited by the underlying device and can usually consist of up to 
 three dimensions.
 
-When executing the kernel, the host code specifies the global work size. The host can specify 
-the size of the work groups the work is divided into, or it can be left to implementation do decide
-automatically. The kernel is then executed on each work item, which can determine its portion 
-of work by accessing its global or local id. The figure ... shows the overall work structure in OpenCL.
-
 \begin{figure}
 \centering
 \includegraphics[width=0.8\textwidth]{images/opencl.jpg}
@@ -279,6 +274,11 @@ of work by accessing its global or local id. The figure ... shows the overall wo
 \label{fig:opencl}
 \end{figure}
 \footnotetext{\url{https://software.intel.com/sites/landingpage/opencl/optimization-guide/Basic_Concepts.htm}}
+
+When executing the kernel, the host code specifies the global work size. The host can specify 
+the size of the work groups the work is divided into, or it can be left to implementation do decide
+automatically. The kernel is then executed on each work item, which can determine its portion 
+of work by accessing its global or local id. The figure ... shows the overall work structure in OpenCL.
 
 \subsection{Kernels}
 
@@ -378,6 +378,29 @@ __kernel void run(
   \end{lstlisting}
 \end{figure}
 
+\section{Related work}
+
+Parallelised version of LES has been created by Gordon Reid~\cite{les_mpi} using MPI
+and Glasgow Model Coupling Framework (GMFC). The work creates MPI implementation for both shared-
+and distributed-memory systems. GMFC implementation is created for shared-memory system.
+The implementation is evaluated using constant global area as well as using expanding area
+test with each node having area of the same size. Both MPI and GMCF have been shown
+to scale well using both evaluation methods.
+
+Another work to Parellise LES is work by Raasch and Schröter \cite{les_palm}. The work
+uses different LES implementation from the one used in this project. Parallelisation
+using MPI is shown to speed up the simulation on both small domain and large domains.
+
+Using Apache Spark for halo exchanges seems to be not well researched use case, although
+one work~\cite{seismic_spark} has used Spark to solve a stencil problem computation. 
+The work implements Jacobi Stencil Codes algorithm which requires exchange of boundary
+data. Three different methods are evaluated. Method using broadcast variables, method
+that shares the boundary data using CassandraDB and method that uses boundary RDDs.
+Method with broadcast variables is shown to scale well up to around 100 nodes, while
+the other methods can scale up to 500 nodes, with the boundary RDDs approach providing
+better performance. Unfortunately the work does not describe in detail the implementation
+details of this approach.
+
 %==============================================================================
 %  Halo exchanges in Spark
 %==============================================================================
@@ -385,14 +408,8 @@ __kernel void run(
 \label{chap:halos}
 
 The main challenge of this project is to construct viable halo exchange algorithm, using 
-data manipulation methods provided by Apache Spark. This has not been done before, although
-one work~\cite{seismic_spark} has used Spark to solve a stencil problem computation. In stencil
-problems, the problem is divided into cells, and to compute one cell, information about its
-neighbours are needed. However, only simple method using broadcast variables (covered later in the chapter)
-was used in this work.
-
-Multiple possible algorithms were considered and their implementation details, advantages
-and drawbacks are discussed in this chapter.
+data manipulation methods provided by Apache Spark. Multiple possible algorithms were 
+considered and their implementation details, advantages and drawbacks are discussed in this chapter.
 
 \section{Game of Life as a proof of concept}
 To test the considered algorithms, a implementation of Conway's Game of Life was used.
@@ -418,6 +435,7 @@ the state of all of their neighbours. This is the same case in the LES and is th
 suitable as a proof of concept.
 
 \section{Broadcast variables}
+\label{chap:broadcast}
 
 The simplest way exchange halos is using broadcast variables. Spark allows to
 create a broadcast variable in the driver program, which is the shipped to worker
@@ -926,6 +944,16 @@ or potentially even thousands nodes. If the computation proves to scale well
 on such large clusters, the current slowdown would be offset by the 
 possibility of running the simulation on much larger domain than what is
 currently possible.
+
+\subsection{Broadcast variables}
+The approach proposed in \autoref{chap:broadcast} was initially dismissed due to 
+unnecessary network transfers. However, since it was found that the bottleneck 
+is caused by Spark overhead and not the network transfers, this approach
+might prove to be surprisingly effective. This approach consists essentially only 
+of two map steps, and thus no steps do network shuffle, which should make Spark
+evaluate the lineage much more efficiently. However, since this approach needs
+to transfer all the neighbour data to the driver program, this approach might
+not be usable when running the simulation on a massively parralel cluster (e.g. 1000s of nodes).
 
 \section{Summary}
 
