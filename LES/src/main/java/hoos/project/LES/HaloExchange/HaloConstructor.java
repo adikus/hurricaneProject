@@ -1,5 +1,9 @@
 package hoos.project.LES.HaloExchange;
 
+/**
+ * @author      Andrej Hoos
+ * Class for constructing and deconstructing halos
+ */
 public class HaloConstructor {
 	
 	// Combines north, south, west, east, northwest, northeast, southwest, southeast into outer halo

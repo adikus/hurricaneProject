@@ -3,11 +3,18 @@ package hoos.project.LES.Kernels;
 import com.amd.aparapi.Range;
 import com.amd.aparapi.device.OpenCLDevice;
 
+/**
+ * @author      Andrej Hoos
+ * Kernel host class for kernel with no halo read and write capability and designed to work on the CPU
+ */
 public class SingleCPU extends Base {
 	
 	private static final int NTH = 128;
 	private int computeUnits;
 	
+	/**
+	 * Dummy Aparapi kernel function to create correct OpenCL method signature
+	 */
 	@Override 
 	public void run() {
 		float sum = p2[0] + uvw[0] + uvwsum[0] + fgh[0] + fgh_old[0] + rhs[0] + mask1[0] + diu[0] + sm[0];
@@ -21,6 +28,12 @@ public class SingleCPU extends Base {
 		p2[0] = sum;
 	}
 	
+	/**
+	 * Create all parameter arrays and initialise their values and also determine the number of compute units on the device
+	 * @param ip x size of the domain on a single node 
+	 * @param jp y size of the domain on a single node 
+	 * @param kp z size of the domain on a single node 
+	 */
 	@Override
 	public void init(int ip, int jp, int kp) {
 		computeUnits = ((OpenCLDevice) (getExecutionMode().equals(EXECUTION_MODE.GPU) ? OpenCLDevice.best() : (OpenCLDevice)OpenCLDevice.firstCPU())).getMaxComputeUnits();
@@ -31,6 +44,10 @@ public class SingleCPU extends Base {
 		System.out.println("Finished initialising kernel..");
 	}
 	
+	/**
+	 * Runs the given step of the simulation
+	 * @param state id of the step to be executed
+	 */
 	public void run(int state) {		
 		System.out.println("Kernel running state: " + state);	
 		switch(state) {

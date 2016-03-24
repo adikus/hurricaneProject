@@ -4,6 +4,10 @@ import java.io.Serializable;
 
 import com.amd.aparapi.Range;
 
+/**
+ * @author      Andrej Hoos
+ * Kernel host class for kernel with halo read and write capability and designed to work on the GPU
+ */
 public class Halos extends Base implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
@@ -19,6 +23,10 @@ public class Halos extends Base implements Serializable {
 	private float nominator, denominator;
 	
 	transient private Range haloRange;
+	
+	/*
+	 * Halo getter and setter methods
+	 */
 	
 	public float[] get_p_halo() {
 		this.get(p_halo);
@@ -100,6 +108,9 @@ public class Halos extends Base implements Serializable {
 		this.put(sm_halo);
 	}
 	
+	/**
+	 * Dummy Aparapi kernel function to create correct OpenCL method signature
+	 */
 	@Override 
 	public void run() {
 		float sum = p2[0] + uvw[0] + uvwsum[0] + fgh[0] + fgh_old[0] + rhs[0] + mask1[0] + diu[0] + sm[0];
@@ -122,6 +133,12 @@ public class Halos extends Base implements Serializable {
 		sm_halo[0] = halo;
 	}
 	
+	/**
+	 * Create all parameter arrays and initialise their values and also create halo buffers
+	 * @param ip x size of the domain on a single node 
+	 * @param jp y size of the domain on a single node 
+	 * @param kp z size of the domain on a single node 
+	 */
 	@Override
 	public void init(int ip, int jp, int kp) {
 		System.out.println("Initialising kernel..");
@@ -172,6 +189,10 @@ public class Halos extends Base implements Serializable {
 		this.put(val_ptr);
 	}
 	
+	/**
+	 * Runs the given step of the simulation
+	 * @param state id of the step to be executed
+	 */
 	public void run(int state) {		
 		System.out.println("Kernel running state: " + state);
 		long time = System.nanoTime();
@@ -253,6 +274,10 @@ public class Halos extends Base implements Serializable {
 		//System.out.println("State 7 value: " + val_ptr[0]);
 	}
 	
+	/**
+	 * Rans a single iteration of the 8th step
+	 * @param i the current subiteration
+	 */
 	public void pressSORIteration(int i) {	
 		int oclGlobalRange;
 		int oclLocalRange;

@@ -2,8 +2,15 @@ package hoos.project.LES.Kernels;
 
 import com.amd.aparapi.Range;
 
+/**
+ * @author      Andrej Hoos
+ * Kernel host class for kernel with no halo read and write capability and designed to work on the GPU
+ */
 public class Single extends Base {
 	
+	/**
+	 * Dummy Aparapi kernel function to create correct OpenCL method signature
+	 */
 	@Override 
 	public void run() {
 		float sum = p2[0] + uvw[0] + uvwsum[0] + fgh[0] + fgh_old[0] + rhs[0] + mask1[0] + diu[0] + sm[0];
@@ -17,6 +24,10 @@ public class Single extends Base {
 		p2[0] = sum;
 	}
 	
+	/**
+	 * Runs the given step of the simulation
+	 * @param state id of the step to be executed
+	 */
 	public void run(int state) {
 		System.out.println("Kernel running state: " + state);	
 		switch(state) {

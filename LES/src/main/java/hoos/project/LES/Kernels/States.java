@@ -1,5 +1,9 @@
 package hoos.project.LES.Kernels;
 
+/**
+ * @author      Andrej Hoos
+ * Class that holds the constants with simulation step ids
+ */
 public class States {
 	public final static int INIT = 0;
 	public final static int HALO_READ_ALL = 38;

@@ -5,6 +5,10 @@ import hoos.project.LES.InitLib;
 import com.amd.aparapi.Kernel;
 import com.amd.aparapi.Range;
 
+/**
+ * @author      Andrej Hoos
+ * Abstract class that provides base functionality for all kernel hosts
+ */
 public abstract class Base extends Kernel {
 	
 	protected int ip, jp, kp;
@@ -45,6 +49,12 @@ public abstract class Base extends Kernel {
 	protected int[] pjm = new int[1];
 	protected int[] pkm = new int[1];
 	
+	/**
+	 * Create all parameter arrays and initialise their values
+	 * @param ip x size of the domain on a single node 
+	 * @param jp y size of the domain on a single node 
+	 * @param kp z size of the domain on a single node 
+	 */
 	public void init(int ip, int jp, int kp) {		
 		this.ip = ip;
 		this.jp = jp;
@@ -124,6 +134,11 @@ public abstract class Base extends Kernel {
 		this.executeState(States.INIT, Range.create(1, 1));
 	}
 	
+	/**
+	 * Run a single simulation step
+	 * @param state id of the step to be executed
+	 * @param range OpenCL range the step to be executed on
+	 */
 	public void executeState(int state, Range range) {
 		state_ptr[0] = state;
 		this.put(state_ptr);

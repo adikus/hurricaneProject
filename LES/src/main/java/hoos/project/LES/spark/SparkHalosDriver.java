@@ -14,6 +14,10 @@ import org.apache.spark.SparkConf;
 
 import scala.Tuple2;
 
+/**
+ * @author      Andrej Hoos
+ * Class that runs LES inside Spark
+ */
 public class SparkHalosDriver {
 	
 	public static void main(String[] args) {
@@ -106,6 +110,16 @@ public class SparkHalosDriver {
 		sc.close();
 	}
 	
+	/**
+	 * Helper method for running the 8th step of the simulation
+	 * @param kernels the kernel collection
+	 * @param ip x size of the domain on a single node 
+	 * @param jp y size of the domain on a single node 
+	 * @param kp z size of the domain on a single node 
+	 * @param X node grid x size
+	 * @param Y node grid y size
+	 * @return the kernel collection
+	 */
 	private static JavaPairRDD<Integer, Halos> pressSORState(JavaPairRDD<Integer, Halos> kernels, int ip, int jp, int kp, int X, int Y) {
 		float pjuge = 0.0001f;
 		int nmaxp = 50;
@@ -151,6 +165,12 @@ public class SparkHalosDriver {
 		return kernels;
 	}
 	
+	/**
+	 * Helper method to execute a single simulation step
+	 * @param kernels the kernel collection
+	 * @param state id of the step to be executed
+	 * @return the kernel collection
+	 */
 	private static JavaPairRDD<Integer, Halos> executeKernelStep(JavaPairRDD<Integer, Halos> kernels, final int state) {
 		JavaPairRDD<Integer, Halos> newKernels = kernels.mapValues(new Function<Halos, Halos>() {
 			public Halos call(Halos kernel){
@@ -164,6 +184,11 @@ public class SparkHalosDriver {
 		return newKernels;
 	}
 	
+	/**
+	 * Helper method to run a reduction over the global domain
+	 * @param kernels the kernel collection
+	 * @return the kernel collection
+	 */
 	private static JavaPairRDD<Integer, Halos> divisionReduction(JavaPairRDD<Integer, Halos> kernels) {
 		Tuple2<Float, Float> reductionPair = kernels.values().map(new Function<Halos, Tuple2<Float, Float>>() {
 			public Tuple2<Float, Float> call(Halos kernel) {

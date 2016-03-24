@@ -13,11 +13,19 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 
 import scala.Tuple2;
 
+/**
+ * @author      Andrej Hoos
+ * Class that abstracts the halo exchanges into helper methods
+ */
 public class HaloExchanger {
 	int im, jm, km, v_dim, X, Y;
 	
 	private static String lastCheckpoint;
 	
+	/**
+	 * @param im, jm, km size of the halo
+	 * @param v_dim the 4th dimension size of the underlying array
+ 	 */
 	public HaloExchanger(int im, int jm, int km, int v_dim) {
 		this.im = im;
 		this.jm = jm;
@@ -25,6 +33,7 @@ public class HaloExchanger {
 		this.v_dim = v_dim;
 	}
 
+	// Deconstructs single 1D halo array into key-value pairs
 	public Iterable<Tuple2<Integer, Neighbour>> deconstructIntoPairs(float[] innerHalo, Integer i, int X, int Y) {
 		this.X = X;
 		this.Y = Y;
@@ -59,6 +68,7 @@ public class HaloExchanger {
 		return neighbourPairs;
 	}
 
+	// Construct single 1D array from array of Neighbours
 	public float[] constructFromPairs(Iterable<Neighbour> neighbours) {
 		float [] outerHalo = new float[2 * v_dim * (im+jm + 2) * km];
 		float [] northHalo = new float[v_dim * km * im];
@@ -105,6 +115,9 @@ public class HaloExchanger {
 		return outerHalo;
 	}
 	
+	/**
+	 * @return key given by the coordinates x and y
+	 */
 	private Integer key(int x, int y) {
 		int dx = (x % X);
 		int dy = (y % Y);
@@ -113,10 +126,23 @@ public class HaloExchanger {
 		return (dx) + (dy)*X;
 	}
 	
+	
 	public static JavaPairRDD<Integer, Halos> exchangeHalos(JavaPairRDD<Integer, Halos> kernels, String halos, final int ip, final int jp, final int kp, final int X, final int Y) {
 		return exchangeHalos(kernels, halos, ip, jp, kp, X, Y, false);
 	}
 	
+	/**
+	 * Helper method that performs halo exchange
+	 * @param kernels the kernel collection
+	 * @param halos comma separated list of halo names
+	 * @param ip x size of the domain on a single node 
+	 * @param jp y size of the domain on a single node 
+	 * @param kp z size of the domain on a single node 
+	 * @param X node grid x size
+	 * @param Y node grid y size
+	 * @param checkpoint determines whether the kernel collection will be checkpointed 
+	 * @return the kernel collection
+	 */
 	public static JavaPairRDD<Integer, Halos> exchangeHalos(JavaPairRDD<Integer, Halos> kernels, String halos, final int ip, final int jp, final int kp, final int X, final int Y, Boolean checkpoint) {
 		final String[] haloNames = halos.split(",");
 		

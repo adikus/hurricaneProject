@@ -2,6 +2,10 @@ package hoos.project.LES.spark;
 
 import org.apache.spark.Partitioner;
 
+/**
+ * @author      Andrej Hoos
+ * Custom Spark partitioner that partitions collection based on its key
+ */
 public class KeyPartitioner extends Partitioner {
 	private static final long serialVersionUID = 1L;
 	

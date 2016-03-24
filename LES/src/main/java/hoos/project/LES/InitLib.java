@@ -2,6 +2,10 @@ package hoos.project.LES;
 
 import com.sun.jna.Native;
 
+/**
+ * @author      Andrej Hoos
+ * Interface for interacting with Fortran subroutines for initialising kernel parameters
+ */
 public interface InitLib extends com.sun.jna.Library {
     InitLib lib = (InitLib) Native.loadLibrary(System.getenv("LES_LIB_PATH"), InitLib.class);
     

@@ -1,6 +1,10 @@
 package hoos.project.LES.Drivers;
 import hoos.project.LES.Kernels.Single;
 
+/**
+ * @author      Andrej Hoos
+ * Class that runs LES without any parallelisation
+ */
 public class SingleDriver{
 
 	public static void main(String[] args) {

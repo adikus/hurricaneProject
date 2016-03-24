@@ -4,6 +4,10 @@ import hoos.project.LES.HaloExchange.HaloConstructor;
 import hoos.project.LES.Kernels.Halos;
 import hoos.project.LES.Kernels.States;
 
+/**
+ * @author      Andrej Hoos
+ * Class that runs LES with simple, single node halo exchanges
+ */
 public class HalosDriver{
 
 	public static void main(String[] args) {
