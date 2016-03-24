@@ -910,6 +910,12 @@ to run the task and exchange the halos seems to be much higher. Spark reports
 task time to be be less than half of the overall execution time, which means
 that most time is spent scheduling task, resolving lineage and network transfers.
 
+One possible explanation of the high overhead might be the need to recompute the
+lineage after each network shuffle, since Spark cannot predict where each item
+in the collection will end up after the shuffle. The fact that shuffle is necessary
+in each halo exchange, and that these are done more than 100 time per steps could
+potentially mean high frequency of Spark recalculating the lineage.
+
 One approach to decrease the overhead could be to try different versions of Spark.
 Evaluation in this project was done using version 1.4.1, however since Spark 
 seems to be rapidly moving project, there are already newer versions (1.5, 1.6), which could have 
@@ -953,7 +959,7 @@ might prove to be surprisingly effective. This approach consists essentially onl
 of two map steps, and thus no steps do network shuffle, which should make Spark
 evaluate the lineage much more efficiently. However, since this approach needs
 to transfer all the neighbour data to the driver program, this approach might
-not be usable when running the simulation on a massively parralel cluster (e.g. 1000s of nodes).
+not be usable when running the simulation on a massively parallel cluster (e.g. 1000s of nodes).
 
 \section{Summary}
 
