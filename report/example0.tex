@@ -1048,6 +1048,16 @@ APARAPI_JAR_PATH=$APARAPI_PATH/com.amd.aparapi/dist/aparapi.jar
 
 \item Build project using \texttt{mvn package}
 
+\item Combile OpenCL binaries
+\begin{verbatim}
+cl/cl-compile cl/kernel.cl cl/hoos.project.LES.Kernels.Single.abcl
+cl/cl-compile cl/kernel_halos.cl cl/hoos.project.LES.Kernels.Halos.abcl
+\end{verbatim}
+If the \texttt{cl-compile} binary does not work on your system, you might
+need to compile it from source \footnote{\url{https://github.com/adikus/cl-compile}}.
+File type of the binaries should be \texttt{.abcl} if using AMD APP, \texttt{.ibcl} if
+using Intel SDK and \texttt{.nbcl} if using NVidia.
+
 \item To run version without Spark you can run either of:
 \begin{verbatim}
   path-to-project/LES$ bash scripts/single.sh N
